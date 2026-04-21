@@ -1,0 +1,213 @@
+[
+  {
+    "id": "81defe1f-4b42-4126-a32f-28e20697c378",
+    "timestamp": "2025-03-01T08:32:00",
+    "reported_by": "Mike Torres",
+    "project": "Harbor View Tower - Phase 2",
+    "raw_description": "Worker fell from scaffolding on level 8 approximately 12 feet. Worker is conscious but complaining of back pain. Called ambulance.",
+    "analysis": {
+      "incident_type": "Fall",
+      "severity": "CRITICAL",
+      "severity_reason": "Fall from height >6 feet with potential spinal injury.",
+      "injured_person": "Unknown",
+      "body_part_affected": "Back/Spine",
+      "location_on_site": "Level 8 scaffolding",
+      "equipment_involved": "Scaffolding",
+      "immediate_cause": "Scaffolding plank gave way under worker weight.",
+      "osha_recordable": true,
+      "osha_reason": "Fall from height resulting in likely hospitalization.",
+      "osha_forms_required": [
+        "OSHA 300",
+        "OSHA 301"
+      ],
+      "immediate_actions_required": [
+        "911 called \u2014 ambulance en route",
+        "Secure scaffolding level 8 \u2014 no entry",
+        "Notify project superintendent",
+        "Preserve scaffolding plank for investigation"
+      ],
+      "summary": "Worker fell approximately 12 feet from Level 8 scaffolding. Worker remained conscious but reported back pain. Emergency services contacted immediately. Scaffolding area secured pending investigation."
+    },
+    "status": "Closed",
+    "report_generated": true
+  },
+  {
+    "id": "2d8ef97b-dd5a-4e45-ab5a-e2f17cf353ba",
+    "timestamp": "2025-03-05T14:15:00",
+    "reported_by": "Sarah Kim",
+    "project": "Harbor View Tower - Phase 2",
+    "raw_description": "Near miss \u2014 crane swung load over workers who were not in designated safe zone. No injuries. Workers did not receive proper communication of lift schedule.",
+    "analysis": {
+      "incident_type": "Near Miss",
+      "severity": "MEDIUM",
+      "severity_reason": "High potential for struck-by fatality if swing had contacted workers.",
+      "injured_person": "None",
+      "body_part_affected": "None",
+      "location_on_site": "Crane lift zone \u2014 east side",
+      "equipment_involved": "Tower crane",
+      "immediate_cause": "Failure to communicate lift schedule to ground crew.",
+      "osha_recordable": false,
+      "osha_reason": "No injury occurred \u2014 near miss only.",
+      "osha_forms_required": [],
+      "immediate_actions_required": [
+        "Review lift communication protocol",
+        "Mandatory toolbox talk with crane operator and ground crew",
+        "Re-mark exclusion zones with high-vis barriers"
+      ],
+      "summary": "Tower crane load swung over workers not cleared from the lift zone. No injuries sustained. Root cause identified as breakdown in pre-lift communication protocol. Corrective action initiated immediately."
+    },
+    "status": "Open",
+    "report_generated": true
+  },
+  {
+    "id": "d3eb48e0-de32-4227-936d-311510ea3f7b",
+    "timestamp": "2025-03-08T09:45:00",
+    "reported_by": "James Okafor",
+    "project": "Riverside Bridge Rehab",
+    "raw_description": "Minor cut on right hand from rebar. Treated on site with first aid kit. No stitches needed. Worker returned to work.",
+    "analysis": {
+      "incident_type": "Struck-By",
+      "severity": "LOW",
+      "severity_reason": "Minor laceration treated with first aid only.",
+      "injured_person": "James Okafor",
+      "body_part_affected": "Right hand",
+      "location_on_site": "Rebar placement area",
+      "equipment_involved": "Rebar",
+      "immediate_cause": "Unprotected rebar ends \u2014 no caps installed.",
+      "osha_recordable": false,
+      "osha_reason": "First aid only, worker returned to full duty.",
+      "osha_forms_required": [],
+      "immediate_actions_required": [
+        "Install rebar end caps on all exposed rebar",
+        "Check PPE (gloves) compliance in rebar zone"
+      ],
+      "summary": "Worker sustained minor cut to right hand from exposed rebar end. Treated on-site with first aid. Worker returned to full duty. Rebar end caps to be installed to prevent recurrence."
+    },
+    "status": "Closed",
+    "report_generated": false
+  },
+  {
+    "id": "1282a6c3-e056-4b85-95c1-a00c47db56f1",
+    "timestamp": "2025-03-10T11:20:00",
+    "reported_by": "Luis Mendez",
+    "project": "Downtown Mixed-Use",
+    "raw_description": "Electrical panel sparked when subcontractor attempted connection without lockout/tagout. Worker got minor shock, hand is numb. Sent to urgent care.",
+    "analysis": {
+      "incident_type": "Electrical",
+      "severity": "CRITICAL",
+      "severity_reason": "Electrical shock with numbness indicates nerve involvement \u2014 hospitalization possible.",
+      "injured_person": "Unknown subcontractor",
+      "body_part_affected": "Hand/Arm",
+      "location_on_site": "Electrical room \u2014 floor 3",
+      "equipment_involved": "Electrical panel",
+      "immediate_cause": "Lockout/tagout procedure not followed before energized work.",
+      "osha_recordable": true,
+      "osha_reason": "Medical treatment beyond first aid \u2014 sent to urgent care.",
+      "osha_forms_required": [
+        "OSHA 300",
+        "OSHA 301"
+      ],
+      "immediate_actions_required": [
+        "Confirm worker received medical evaluation",
+        "Lock out electrical panel \u2014 do not energize",
+        "Notify electrical subcontractor supervisor",
+        "Conduct LOTO re-training for all electrical subs"
+      ],
+      "summary": "Subcontractor received electrical shock from panel while performing connection without lockout/tagout. Worker experienced hand numbness and was transported to urgent care. LOTO violation to be investigated and corrective training scheduled."
+    },
+    "status": "Open",
+    "report_generated": true
+  },
+  {
+    "id": "10e85c6c-afc3-4a7f-88c5-e5109b9d617b",
+    "timestamp": "2025-03-12T16:05:00",
+    "reported_by": "Dana Patel",
+    "project": "Riverside Bridge Rehab",
+    "raw_description": "Chemical spill \u2014 concrete form release agent spilled on worker's forearm. Skin is red and irritated. Washed with water for 15 min. No blistering.",
+    "analysis": {
+      "incident_type": "Chemical Exposure",
+      "severity": "MEDIUM",
+      "severity_reason": "Chemical burn with skin irritation requires medical evaluation.",
+      "injured_person": "Unknown",
+      "body_part_affected": "Forearm",
+      "location_on_site": "Formwork area",
+      "equipment_involved": "Form release agent",
+      "immediate_cause": "No PPE (chemical-resistant gloves) worn during product application.",
+      "osha_recordable": true,
+      "osha_reason": "Chemical burn requiring medical evaluation beyond first aid.",
+      "osha_forms_required": [
+        "OSHA 300",
+        "OSHA 301"
+      ],
+      "immediate_actions_required": [
+        "Continue flushing with water \u2014 20 minutes minimum",
+        "Consult SDS for release agent \u2014 check medical section",
+        "Send worker to occupational health clinic",
+        "Enforce chemical PPE compliance in formwork area"
+      ],
+      "summary": "Worker sustained chemical burn to forearm from form release agent spill. Immediate decontamination performed on site. Medical evaluation recommended due to persistent skin irritation. PPE compliance failure identified as root cause."
+    },
+    "status": "Open",
+    "report_generated": false
+  },
+  {
+    "reported_by": "Mayur",
+    "project": "Harbor View Tower - Phase 2",
+    "stakeholder_role": "Subcontractor",
+    "organization": "",
+    "raw_description": "Sub-contractor got shocked while connecting to the panel on floor 3. Didn't follow lockout tagout procedure. His hand went numb. We sent him to urgent care right away.",
+    "analysis": {
+      "analysis_schema_version": 3,
+      "incident_type": "Electrical",
+      "severity": "CRITICAL",
+      "severity_reason": "Classified as CRITICAL based on keywords detected in report.",
+      "injured_person": "Unknown",
+      "body_part_affected": "Unknown",
+      "location_on_site": "General site",
+      "equipment_involved": "None",
+      "immediate_cause": "Under investigation \u2014 see full incident description.",
+      "osha_recordable": true,
+      "osha_reason": "Likely requires medical treatment beyond first aid.",
+      "osha_forms_required": [
+        "OSHA 300",
+        "OSHA 301"
+      ],
+      "risk_score": 100,
+      "risk_score_reason": "Risk scored mainly from CRITICAL severity plus incident category (Electrical) and OSHA recordable.",
+      "evidence_snippets": [
+        "Sub-contractor got shocked while connecting to the panel on floor 3",
+        "His hand went numb"
+      ],
+      "environmental_hazard_score": 35,
+      "environmental_hazard_reason": "Environmental hazard assessed as low based on incident category and environmental-release indicators.",
+      "sustainability_concerns": [
+        "Incorrect energizing/repair triggers avoidable component replacement (e-waste + materials waste)"
+      ],
+      "sustainability_actions_required": [
+        "Strengthen LOTO compliance (pre-task checklist + sign-off + verification point at the panel/work location)",
+        "Reduce reactive repairs by adding failure-pattern checks to preventive maintenance schedules",
+        "Stop unnecessary replacements: repair/replace decisions require documented fault verification",
+        "Ensure any removed components are handled as e-waste/material waste per approved vendor stream"
+      ],
+      "efficiency_score": 100,
+      "efficiency_score_reason": "Efficiency opportunity driven by high-impact incident impact (Electrical) and process-control gaps detected in the report.",
+      "efficiency_actions_required": [
+        "Use a LOTO verification checklist at the point of work (checkboxes + supervisor sign-off before energizing)",
+        "Add photo evidence/verification steps for completed lockout/tagout where feasible",
+        "Track repeat issues and trigger targeted re-training within 7 days of the incident",
+        "Ensure spare parts are kitted to reduce downtime from follow-on repairs"
+      ],
+      "immediate_actions_required": [
+        "Secure the area and prevent further hazards",
+        "Provide first aid or call 911 if needed",
+        "Notify safety manager immediately",
+        "Preserve evidence for investigation"
+      ],
+      "summary": "Incident report submitted. AI analysis completed using rule-based fallback (no API key configured). Incident classified as Electrical with CRITICAL severity. Please review and verify all fields."
+    },
+    "status": "Open",
+    "report_generated": false,
+    "id": "045e455b-3273-40ac-af57-5b5554bbd60b",
+    "timestamp": "2026-04-20T23:01:40.587188"
+  }
+]

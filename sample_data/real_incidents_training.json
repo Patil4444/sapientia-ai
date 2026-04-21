@@ -1,0 +1,111 @@
+{
+  "description": "Curated open-source construction incidents (2020–present). Based on OSHA Fatal Four, BLS CFOI patterns, and public reports. Sapientia would have enabled early reporting, correct classification, and OSHA-compliant documentation.",
+  "source_note": "Incident types and causes align with OSHA.gov and BLS.gov construction fatality/injury data. Descriptions are anonymized and representative.",
+  "incidents": [
+    {
+      "year": 2020,
+      "incident_type": "Fall",
+      "severity": "CRITICAL",
+      "raw_description": "Worker fell from unprotected roof edge at residential job site, approximately 18 feet. No guardrails or fall protection in use. Worker sustained fatal injuries. Crew had not completed fall protection training for that phase.",
+      "how_constructsafe_helps": "Immediate reporting would trigger CRITICAL classification, OSHA 301 requirement, and safety-manager alert; platform prompts for fall protection and training follow-up."
+    },
+    {
+      "year": 2020,
+      "incident_type": "Struck-By",
+      "severity": "CRITICAL",
+      "raw_description": "Worker struck by reversing dump truck in site loading zone. Spotter was not assigned. Worker pronounced dead at scene. Vehicle backup alarm was not functioning.",
+      "how_constructsafe_helps": "Report would flag struck-by and trigger vehicle/equipment protocols and spotter requirements in immediate actions."
+    },
+    {
+      "year": 2021,
+      "incident_type": "Electrical",
+      "severity": "CRITICAL",
+      "raw_description": "Electrician contacted energized circuit while working on panel without lockout/tagout. CPR performed; worker transported to hospital with serious injuries. LOTO procedures were not followed.",
+      "how_constructsafe_helps": "AI would classify as CRITICAL and OSHA recordable, list LOTO re-training and panel lockout in immediate actions, and require OSHA 300/301."
+    },
+    {
+      "year": 2021,
+      "incident_type": "Caught-In/Between",
+      "severity": "CRITICAL",
+      "raw_description": "Worker in trench approximately 8 feet deep when wall collapsed. No trench box or shoring. Worker trapped; fatal. Soil type had not been assessed for proper protective system.",
+      "how_constructsafe_helps": "Caught-in/between and trench collapse would trigger CRITICAL, excavation/trenching standards, and mandatory protective systems in actions."
+    },
+    {
+      "year": 2021,
+      "incident_type": "Fall",
+      "severity": "CRITICAL",
+      "raw_description": "Worker fell from scaffolding after guardrail gave way on third level. Fell approximately 12 feet; multiple fractures. Scaffolding had not been inspected after recent move.",
+      "how_constructsafe_helps": "Fall from height would be CRITICAL; platform would require scaffolding inspection and guardrail verification in immediate actions."
+    },
+    {
+      "year": 2022,
+      "incident_type": "Struck-By",
+      "severity": "MEDIUM",
+      "raw_description": "Worker struck by swinging load from crane. Load was not rigged correctly; tagline not used. Worker suffered leg injury; medical treatment beyond first aid. Lift zone was not fully cleared.",
+      "how_constructsafe_helps": "Struck-by and medical treatment beyond first aid → MEDIUM, OSHA recordable; AI would list rigging and lift-zone procedures."
+    },
+    {
+      "year": 2022,
+      "incident_type": "Chemical Exposure",
+      "severity": "MEDIUM",
+      "raw_description": "Worker splashed with corrosive cleaning agent; not wearing chemical-resistant gloves or face protection. Skin and eye exposure. Flushed at eyewash; sent to urgent care.",
+      "how_constructsafe_helps": "Chemical exposure and medical treatment → MEDIUM, OSHA recordable; SDS and PPE compliance would be in immediate actions."
+    },
+    {
+      "year": 2022,
+      "incident_type": "Near Miss",
+      "severity": "MEDIUM",
+      "raw_description": "Near miss: excavator swung and came within feet of worker. Worker was in blind spot; no signal person. No injury but high potential for fatality. No pre-task huddle for the dig.",
+      "how_constructsafe_helps": "Near miss with high potential → MEDIUM; platform would log it and recommend signal person and exclusion zones."
+    },
+    {
+      "year": 2023,
+      "incident_type": "Fall",
+      "severity": "CRITICAL",
+      "raw_description": "Worker fell from ladder while carrying materials. Ladder was not secured; base slipped. Fall about 10 feet. Head injury; hospitalized. No three-point contact maintained.",
+      "how_constructsafe_helps": "Fall from ladder → CRITICAL; immediate actions would include ladder safety and securing base."
+    },
+    {
+      "year": 2023,
+      "incident_type": "Electrical",
+      "severity": "MEDIUM",
+      "raw_description": "Worker received shock from damaged extension cord while operating power tool. Minor burn to hand; first aid on site. Cord had exposed conductors; not taken out of service.",
+      "how_constructsafe_helps": "Electrical + first aid only could be LOW/MEDIUM; platform would still flag equipment defect and cord inspection."
+    },
+    {
+      "year": 2023,
+      "incident_type": "Struck-By",
+      "severity": "LOW",
+      "raw_description": "Worker hit by flying debris from cutting operation. Small fragment to arm; first aid only. No safety glasses worn; PPE violation.",
+      "how_constructsafe_helps": "Struck-by, first aid only → LOW; platform would still record and recommend PPE compliance."
+    },
+    {
+      "year": 2024,
+      "incident_type": "Caught-In/Between",
+      "severity": "CRITICAL",
+      "raw_description": "Worker’s hand caught in rotating equipment during cleanup. Machine was not locked out. Amputation of two fingers; emergency transport.",
+      "how_constructsafe_helps": "Caught-in, amputation → CRITICAL; LOTO and machine guarding would be in required actions and OSHA 301."
+    },
+    {
+      "year": 2024,
+      "incident_type": "Fire/Explosion",
+      "severity": "CRITICAL",
+      "raw_description": "Flash fire in confined space during welding. Hot work permit not obtained; atmosphere not tested. Two workers burned; one hospitalized.",
+      "how_constructsafe_helps": "Fire/explosion and confined space → CRITICAL; hot work permit and atmospheric testing would be required in actions."
+    },
+    {
+      "year": 2024,
+      "incident_type": "Equipment Failure",
+      "severity": "MEDIUM",
+      "raw_description": "Forklift mast failed while lifting load; load dropped. No injury but near hit to workers below. Mast had visible crack; not reported or taken OOS.",
+      "how_constructsafe_helps": "Equipment failure and near miss → MEDIUM; inspection and OOS until repair would be in immediate actions."
+    },
+    {
+      "year": 2025,
+      "incident_type": "Fall",
+      "severity": "CRITICAL",
+      "raw_description": "Worker stepped through unguarded opening in floor on second level. Fall approximately 15 feet. Multiple injuries; OSHA 300 and 301 required.",
+      "how_constructsafe_helps": "Fall through opening → CRITICAL; hole cover and guardrail requirements would be in immediate actions and forms."
+    }
+  ]
+}

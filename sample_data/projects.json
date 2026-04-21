@@ -1,0 +1,39 @@
+{
+  "projects": [
+    {
+      "id": "601b7d54-4334-4587-8934-9cc47f99ea1d",
+      "name": "Harbor View Tower - Phase 2",
+      "start_date": "",
+      "end_date": "",
+      "status": "active"
+    },
+    {
+      "id": "4ebd9348-6807-4113-a7ca-9254e0edff91",
+      "name": "Riverside Bridge Rehab",
+      "start_date": "",
+      "end_date": "",
+      "status": "active"
+    },
+    {
+      "id": "8ba77474-bd77-48f0-9aa1-7ddc2aaabc71",
+      "name": "Downtown Mixed-Use Development",
+      "start_date": "",
+      "end_date": "",
+      "status": "active"
+    },
+    {
+      "id": "30e60865-418f-4117-9d36-d672c89d1b4f",
+      "name": "Highway 128 Expansion",
+      "start_date": "",
+      "end_date": "",
+      "status": "active"
+    },
+    {
+      "id": "05ee5372-c812-450a-bb4e-17fddad9b5f9",
+      "name": "Waterfront Parking Structure",
+      "start_date": "",
+      "end_date": "",
+      "status": "active"
+    }
+  ]
+}
