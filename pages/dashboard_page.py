@@ -165,3 +165,12 @@ def render():
             f'</div>',
             unsafe_allow_html=True
         )
+
+
+# NOTE:
+# `app.py` imports these page modules for navigation. To avoid duplicate widget
+# IDs, `app.py` sets `SAPIENTIA_SKIP_RENDER=1` before importing.
+# When you open a page directly via Streamlit's `pages/` multipage sidebar,
+# that env var is not set, so the page should render normally.
+if os.environ.get("SAPIENTIA_SKIP_RENDER") != "1":
+    render()
