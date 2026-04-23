@@ -9,6 +9,10 @@ _ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
+# This process generates PDFs in-process. Prevents utils.report_generator from
+# delegating via HTTP to the same host when SAPIENTIA_API_URL is set globally.
+os.environ["SAPIENTIA_IS_PDF_WORKER"] = "1"
+
 from typing import Any
 
 from fastapi import Body, FastAPI, HTTPException
@@ -19,7 +23,11 @@ from pydantic import BaseModel, Field
 from utils import data_store, project_store
 from utils.agent import analyze_incident
 from utils.alerts import send_alert
-from utils.report_generator import generate_incident_report, generate_pitch_pack_pdf
+from utils.report_generator import (
+    REPORTLAB_AVAILABLE,
+    generate_incident_report,
+    generate_pitch_pack_pdf,
+)
 
 app = FastAPI(title="Sapientia API", version="1.0")
 
@@ -31,6 +39,7 @@ app.add_middleware(
         "http://localhost:3000",
         "http://127.0.0.1:3000",
     ],
+    allow_origin_regex=r"https://.*\.streamlit\.app$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -62,7 +71,12 @@ class PitchPackRequest(BaseModel):
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "service": "sapientia-api"}
+    return {
+        "status": "ok",
+        "service": "sapientia-api",
+        "reportlab": REPORTLAB_AVAILABLE,
+        "pdf_routes": ["/api/reports/incident-pdf", "/api/reports/pitch-pack-pdf"],
+    }
 
 
 @app.get("/api/incidents")
@@ -124,14 +138,32 @@ def post_analyze(req: AnalyzeRequest):
 
 @app.post("/api/reports/incident-pdf")
 def post_incident_pdf(incident: dict[str, Any] = Body(...)):
-    pdf = generate_incident_report(incident)
-    return Response(content=pdf, media_type="application/pdf")
+    try:
+        pdf = generate_incident_report(incident)
+    except ImportError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"PDF generation failed: {e}") from e
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={"Content-Disposition": 'attachment; filename="incident_report.pdf"'},
+    )
 
 
 @app.post("/api/reports/pitch-pack-pdf")
 def post_pitch_pack_pdf(req: PitchPackRequest):
-    pdf = generate_pitch_pack_pdf(req.incidents)
-    return Response(content=pdf, media_type="application/pdf")
+    try:
+        pdf = generate_pitch_pack_pdf(req.incidents)
+    except ImportError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"PDF generation failed: {e}") from e
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={"Content-Disposition": 'attachment; filename="pitch_pack.pdf"'},
+    )
 
 
 @app.post("/api/alerts/send")

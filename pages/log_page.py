@@ -250,24 +250,33 @@ def render():
                     update_incident(inc["id"], {"status": new_status})
                     st.rerun()
 
-                # PDF export
+                # PDF export — persist bytes in session_state so download survives reruns.
                 st.markdown("")
-                if st.button("📄 Generate PDF", key=f"pdf_{inc['id']}"):
+                iid = inc["id"]
+                pdf_bkey = f"_log_pdf_bytes_{iid}"
+                pdf_fkey = f"_log_pdf_fname_{iid}"
+                if st.button("📄 Generate PDF", key=f"pdf_{iid}"):
                     try:
                         pdf = generate_incident_report(inc)
                         update_incident(inc["id"], {"report_generated": True})
-                        fname = f"incident_{inc['id'][:8]}_{datetime.now().strftime('%Y%m%d')}.pdf"
-                        st.download_button(
-                            "⬇️ Download",
-                            data=pdf,
-                            file_name=fname,
-                            mime="application/pdf",
-                            key=f"dl_{inc['id']}"
-                        )
+                        fname = f"incident_{iid[:8]}_{datetime.now().strftime('%Y%m%d')}.pdf"
+                        st.session_state[pdf_bkey] = pdf
+                        st.session_state[pdf_fkey] = fname
+                        st.success("PDF ready — use Download below.")
                     except ImportError:
                         st.error("pip install reportlab")
                     except Exception as e:
                         st.error(str(e))
+
+                if st.session_state.get(pdf_bkey):
+                    st.download_button(
+                        "⬇️ Download",
+                        data=st.session_state[pdf_bkey],
+                        file_name=st.session_state.get(pdf_fkey) or "incident.pdf",
+                        mime="application/pdf",
+                        key=f"dl_{iid}",
+                        use_container_width=True,
+                    )
 
                 if a.get("_api_error"):
                     st.caption(f"Demo mode analysis")

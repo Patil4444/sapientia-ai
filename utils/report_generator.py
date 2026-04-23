@@ -37,12 +37,24 @@ def generate_incident_report(incident: dict) -> bytes:
     from utils.http_api import client_api_base
 
     base = client_api_base()
-    if base:
+    # When the FastAPI server runs with SAPIENTIA_API_URL set, skip HTTP (avoid calling self).
+    if base and os.environ.get("SAPIENTIA_IS_PDF_WORKER") != "1":
         import httpx
 
-        r = httpx.post(f"{base}/api/reports/incident-pdf", json=incident, timeout=120.0)
-        r.raise_for_status()
-        return r.content
+        try:
+            r = httpx.post(f"{base}/api/reports/incident-pdf", json=incident, timeout=120.0)
+            r.raise_for_status()
+            return r.content
+        except httpx.RequestError as e:
+            raise RuntimeError(
+                f"Backend PDF API unreachable at {base!r}. Clear **Backend base URL** in Settings "
+                "to generate PDFs locally with ReportLab, or start the FastAPI server."
+            ) from e
+        except httpx.HTTPStatusError as e:
+            raise RuntimeError(
+                f"Backend PDF API returned {e.response.status_code} for {base!r}. "
+                "Check the server or clear the backend URL in Settings to use local ReportLab."
+            ) from e
 
     if not REPORTLAB_AVAILABLE:
         raise ImportError("ReportLab not installed. Run: pip install reportlab")
@@ -321,12 +333,26 @@ def generate_pitch_pack_pdf(incidents: list[dict]) -> bytes:
     from utils.http_api import client_api_base
 
     base = client_api_base()
-    if base:
+    if base and os.environ.get("SAPIENTIA_IS_PDF_WORKER") != "1":
         import httpx
 
-        r = httpx.post(f"{base}/api/reports/pitch-pack-pdf", json={"incidents": incidents}, timeout=120.0)
-        r.raise_for_status()
-        return r.content
+        try:
+            r = httpx.post(
+                f"{base}/api/reports/pitch-pack-pdf",
+                json={"incidents": incidents},
+                timeout=120.0,
+            )
+            r.raise_for_status()
+            return r.content
+        except httpx.RequestError as e:
+            raise RuntimeError(
+                f"Backend pitch-pack API unreachable at {base!r}. Clear **Backend base URL** in Settings "
+                "to generate PDFs locally, or start the FastAPI server."
+            ) from e
+        except httpx.HTTPStatusError as e:
+            raise RuntimeError(
+                f"Backend pitch-pack API returned {e.response.status_code} for {base!r}."
+            ) from e
 
     if not REPORTLAB_AVAILABLE:
         raise ImportError("ReportLab not installed. Run: pip install reportlab")

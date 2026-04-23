@@ -57,6 +57,9 @@ def render():
             st.error("Please enter a reporter name.")
             return
 
+        st.session_state.pop("_pitch_pdf_bytes", None)
+        st.session_state.pop("_pitch_pdf_fname", None)
+
         run_count = int(run_count)
         chosen = DEMO_SCENARIOS[:run_count]
         results = []
@@ -150,23 +153,28 @@ def render():
         st.markdown("---")
         st.markdown("### Investor Pitch Pack Export")
         st.caption("Exports a single PDF summarizing risk distribution, OSHA recordability, avg efficiency/ESG hazard, and top actions.")
-        if st.button("📄 Download Investor Pitch Pack PDF", use_container_width=True, key="pitch_pack_btn"):
+        if st.button("📄 Generate Investor Pitch Pack PDF", use_container_width=True, key="pitch_pack_btn"):
             try:
                 all_incidents = load_incidents()
                 pdf_bytes = generate_pitch_pack_pdf(all_incidents)
                 filename = f"constructsafe_investor_pitch_pack_{datetime.now().strftime('%Y%m%d')}.pdf"
-                st.download_button(
-                    label="⬇️ Download Pitch Pack PDF",
-                    data=pdf_bytes,
-                    file_name=filename,
-                    mime="application/pdf",
-                    use_container_width=True,
-                )
-                st.success("Pitch Pack PDF ready!")
+                st.session_state["_pitch_pdf_bytes"] = pdf_bytes
+                st.session_state["_pitch_pdf_fname"] = filename
+                st.success("Pitch pack generated — use **Download** below.")
             except ImportError as e:
                 st.error(str(e))
             except Exception as e:
                 st.error(f"Error generating Pitch Pack: {e}")
+
+        if st.session_state.get("_pitch_pdf_bytes"):
+            st.download_button(
+                label="⬇️ Download Pitch Pack PDF",
+                data=st.session_state["_pitch_pdf_bytes"],
+                file_name=st.session_state.get("_pitch_pdf_fname") or "pitch_pack.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+                key="dl_pitch_pack_pdf",
+            )
 
 
 # NOTE:

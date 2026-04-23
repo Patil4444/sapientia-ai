@@ -1,176 +1,220 @@
-import streamlit as st
-from datetime import datetime
+import html
+import os
+import sys
 from collections import Counter
-import sys, os
+from datetime import datetime, timedelta, timezone
+
+import streamlit as st
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from utils.badges import get_severity_badge, get_status_dot
 from utils.data_store import load_incidents
+from utils.empty_states import (
+    no_critical_empty_state,
+    no_incidents_empty_state,
+)
+
+
+def _parse_iso_ts(raw: str) -> datetime | None:
+    if not raw:
+        return None
+    try:
+        return datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except Exception:
+        return None
 
 
 def render():
-    st.markdown("## 📊 Safety Dashboard")
-
+    focus = st.session_state.get("sapientia_focus_project") or ""
     incidents = load_incidents()
+    if focus:
+        incidents = [i for i in incidents if (i.get("project") or "") == focus]
+
+    updated_slot = st.empty()
+    now_utc = datetime.now(timezone.utc)
+    updated_slot.markdown(
+        f'<p class="sap-muted" style="margin:0;text-align:right;font-size:13px;">Updated {now_utc.strftime("%H:%M")} UTC</p>',
+        unsafe_allow_html=True,
+    )
+
+    week_start = now_utc - timedelta(days=7)
+
+    def _in_week(inc: dict) -> bool:
+        dt = _parse_iso_ts(inc.get("timestamp") or "")
+        if not dt:
+            return False
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt >= week_start
+
+    week_incidents = [i for i in incidents if _in_week(i)]
+    crit_week = sum(
+        1
+        for i in week_incidents
+        if (i.get("analysis") or {}).get("severity") == "CRITICAL"
+    )
+    type_ctr = Counter(
+        (i.get("analysis") or {}).get("incident_type") or "Unknown" for i in incidents
+    )
+    top_type, top_n = type_ctr.most_common(1)[0] if type_ctr else ("—", 0)
+
+    trend = (
+        f"{top_type} trending up"
+        if top_n > 1 and top_type != "—"
+        else "No recurring pattern detected"
+        if incidents
+        else "Awaiting first report"
+    )
+    pulse_line = (
+        f"{len(week_incidents)} incidents this week · {crit_week} critical · {trend}"
+        if incidents
+        else "No incidents yet — reporting pipeline ready"
+    )
+
+    st.markdown(
+        f'<div class="sap-glass-panel--pulse-bar">'
+        f'<div style="display:flex;align-items:center;gap:10px;">'
+        f'<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#00D68F;'
+        f'animation:pulse-dot-open 2s ease-in-out infinite;"></span>'
+        f'<span class="sap-muted" style="font-size:11px;letter-spacing:0.8px;text-transform:uppercase;">Monitoring</span></div>'
+        f'<div style="flex:1;text-align:center;font-size:14px;color:#F1F5F9;font-weight:500;">{html.escape(pulse_line)}</div>'
+        f'<div style="min-width:140px;"></div>'
+        f"</div>",
+        unsafe_allow_html=True,
+    )
 
     if not incidents:
-        st.info("No incidents logged yet. Submit your first incident report.")
+        st.markdown(no_incidents_empty_state(), unsafe_allow_html=True)
         return
 
-    # ---- KPI Row ----
-    total      = len(incidents)
-    critical   = sum(1 for i in incidents if i.get("analysis", {}).get("severity") == "CRITICAL")
-    medium     = sum(1 for i in incidents if i.get("analysis", {}).get("severity") == "MEDIUM")
-    low        = sum(1 for i in incidents if i.get("analysis", {}).get("severity") == "LOW")
-    recordable = sum(1 for i in incidents if i.get("analysis", {}).get("osha_recordable"))
+    critical_list = [
+        i
+        for i in incidents
+        if (i.get("analysis") or {}).get("severity") == "CRITICAL"
+    ]
+
+    crit_count = len(critical_list)
+    st.markdown(
+        f'<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">'
+        f'<span style="font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#FF4444;font-weight:700;">CRITICAL NOW</span>'
+        f'<span style="background:#1A0A0A;border:1px solid #FF4444;color:#FF4444;font-size:11px;font-weight:700;'
+        f'padding:2px 10px;border-radius:20px;">{crit_count}</span></div>',
+        unsafe_allow_html=True,
+    )
+
+    checked_display = datetime.now(timezone.utc).strftime("%b %d, %Y %H:%M UTC")
+    if not critical_list:
+        st.markdown(no_critical_empty_state(checked_display), unsafe_allow_html=True)
+    else:
+        for inc in sorted(
+            critical_list, key=lambda x: x.get("timestamp") or "", reverse=True
+        ):
+            _render_critical_card(inc)
+
+    total = len(incidents)
+    critical = sum(
+        1 for i in incidents if (i.get("analysis") or {}).get("severity") == "CRITICAL"
+    )
     open_cases = sum(1 for i in incidents if i.get("status") == "Open")
+    week_n = len(week_incidents)
 
-    c1, c2, c3, c4, c5, c6 = st.columns(6)
-    c1.metric("Total Incidents", total)
-    c2.metric("🔴 Critical",     critical)
-    c3.metric("🟠 Medium",       medium)
-    c4.metric("🟢 Low",          low)
-    c5.metric("⚠️ OSHA Recordable", recordable)
-    c6.metric("📂 Open Cases",   open_cases)
-
-    st.markdown("---")
-
-    col_left, col_right = st.columns(2)
-
-    # ---- Severity Breakdown ----
-    with col_left:
-        st.markdown("#### Incidents by Severity")
-        sev_counts = Counter(i.get("analysis", {}).get("severity", "Unknown") for i in incidents)
-        for sev, color, emoji in [("CRITICAL", "#FF1744", "🔴"), ("MEDIUM", "#FF6B00", "🟠"), ("LOW", "#2E7D32", "🟢")]:
-            count = sev_counts.get(sev, 0)
-            pct   = int(count / total * 100) if total else 0
+    mcols = st.columns(4)
+    metric_specs = [
+        ("Total incidents", total, "#F1F5F9"),
+        ("Critical", critical, "#FF4444"),
+        ("Open cases", open_cases, "#FFB020"),
+        ("This week", week_n, "#00E5FF"),
+    ]
+    for col, (label, val, colr) in zip(mcols, metric_specs):
+        with col:
             st.markdown(
-                f'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">'
-                f'<span style="width:80px;font-size:12px;font-family:monospace;">{emoji} {sev}</span>'
-                f'<div style="flex:1;background:#e0d9d0;border-radius:2px;height:18px;position:relative;">'
-                f'<div style="background:{color};width:{pct}%;height:100%;border-radius:2px;"></div></div>'
-                f'<span style="width:30px;text-align:right;font-size:13px;font-weight:bold;">{count}</span>'
-                f'<span style="width:36px;font-size:11px;color:#888;">{pct}%</span></div>',
-                unsafe_allow_html=True
+                f'<div class="sap-glass-panel sap-glass-panel--metric">'
+                f'<div class="sap-kpi-num" style="color:{colr};">{val}</div>'
+                f'<div class="sap-kpi-label">{html.escape(label)}</div>'
+                f"</div>",
+                unsafe_allow_html=True,
             )
 
-    # ---- Incident Types ----
-    with col_right:
-        st.markdown("#### Incidents by Type")
-        type_counts = Counter(i.get("analysis", {}).get("incident_type", "Unknown") for i in incidents)
-        for itype, count in sorted(type_counts.items(), key=lambda x: x[1], reverse=True):
-            pct = int(count / total * 100) if total else 0
-            st.markdown(
-                f'<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">'
-                f'<span style="width:130px;font-size:12px;font-family:monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{itype}</span>'
-                f'<div style="flex:1;background:#e0d9d0;border-radius:2px;height:16px;">'
-                f'<div style="background:#FF6B00;width:{pct}%;height:100%;border-radius:2px;"></div></div>'
-                f'<span style="width:28px;text-align:right;font-size:13px;font-weight:bold;">{count}</span></div>',
-                unsafe_allow_html=True
-            )
+    st.markdown('<div class="sap-section-title">RECENT ACTIVITY</div>', unsafe_allow_html=True)
 
-    st.markdown("---")
+    sorted_feed = sorted(
+        incidents, key=lambda x: x.get("timestamp") or "", reverse=True
+    )[:10]
 
-    col3, col4 = st.columns(2)
+    border_for = {
+        "CRITICAL": "#FF4444",
+        "MEDIUM": "#FFB020",
+        "LOW": "#00D68F",
+    }
 
-    # ---- Projects Breakdown ----
-    with col3:
-        st.markdown("#### Incidents by Project")
-        proj_counts = Counter(i.get("project", "Unknown") for i in incidents)
-        for proj, count in proj_counts.most_common():
-            pct   = int(count / total * 100) if total else 0
-            short = proj[:28] + "…" if len(proj) > 28 else proj
-            st.markdown(
-                f'<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">'
-                f'<span style="width:170px;font-size:11px;white-space:nowrap;">{short}</span>'
-                f'<div style="flex:1;background:#e0d9d0;border-radius:2px;height:14px;">'
-                f'<div style="background:#0f0f0f;width:{pct}%;height:100%;border-radius:2px;"></div></div>'
-                f'<span style="font-size:13px;font-weight:bold;">{count}</span></div>',
-                unsafe_allow_html=True
-            )
-
-    # ---- OSHA Status ----
-    with col4:
-        st.markdown("#### OSHA Recordkeeping Status")
-        forms_needed = []
-        for inc in incidents:
-            forms_needed.extend(inc.get("analysis", {}).get("osha_forms_required", []))
-        form_counts = Counter(forms_needed)
-
-        forms_html = "".join(
-            f'<span style="background:#fff8f0;border:1px solid #FF6B00;padding:3px 10px;'
-            f'border-radius:3px;font-family:monospace;font-size:12px;margin-right:6px;">'
-            f'{f}: {c}</span>'
-            for f, c in form_counts.items()
-        ) or '<span style="font-size:12px;color:#888;">None required</span>'
+    for inc in sorted_feed:
+        a = inc.get("analysis") or {}
+        sev = (a.get("severity") or "LOW").upper()
+        left_b = border_for.get(sev, "#1A2540")
+        dt = _parse_iso_ts(inc.get("timestamp") or "")
+        ts_disp = dt.strftime("%b %d %H:%M") if dt else html.escape(
+            inc.get("timestamp") or "—"
+        )
+        itype = html.escape(a.get("incident_type") or "—")
+        raw_desc = inc.get("raw_description") or a.get("summary") or "—"
+        desc_short = html.escape(raw_desc[:220]) + (
+            "…" if len(raw_desc) > 220 else ""
+        )
+        proj = html.escape(inc.get("project") or "—")
+        rep = html.escape(inc.get("reported_by") or "—")
+        status = inc.get("status") or "Open"
 
         st.markdown(
-            f'<div style="background:white;border:1px solid #e0d9d0;border-radius:4px;padding:16px;">'
-            f'<div style="display:flex;justify-content:space-between;margin-bottom:12px;">'
-            f'<div style="text-align:center;">'
-            f'<div style="font-size:28px;font-weight:bold;color:#FF1744;font-family:monospace;">{recordable}</div>'
-            f'<div style="font-size:11px;color:#888;">Recordable</div></div>'
-            f'<div style="text-align:center;">'
-            f'<div style="font-size:28px;font-weight:bold;color:#2E7D32;font-family:monospace;">{total - recordable}</div>'
-            f'<div style="font-size:11px;color:#888;">Not Recordable</div></div>'
-            f'<div style="text-align:center;">'
-            f'<div style="font-size:28px;font-weight:bold;color:#FF6B00;font-family:monospace;">{open_cases}</div>'
-            f'<div style="font-size:11px;color:#888;">Open Cases</div></div></div>'
-            f'<hr style="border:none;border-top:1px solid #e0d9d0;margin:10px 0;"/>'
-            f'<div style="font-size:11px;color:#888;font-weight:bold;margin-bottom:6px;">FORMS REQUIRED</div>'
-            f'{forms_html}</div>',
-            unsafe_allow_html=True
-        )
-
-    st.markdown("---")
-
-    # ---- Recent Incidents ----
-    st.markdown("#### Recent Incidents")
-    sorted_incidents = sorted(incidents, key=lambda x: x.get("timestamp", ""), reverse=True)[:8]
-
-    for inc in sorted_incidents:
-        a   = inc.get("analysis", {})
-        sev = a.get("severity", "LOW")
-        sev_color = {"CRITICAL": "#FF1744", "MEDIUM": "#FF6B00", "LOW": "#2E7D32"}.get(sev, "#888")
-        status_color = "#FF6B00" if inc.get("status") == "Open" else "#888"
-
-        try:
-            dt       = datetime.fromisoformat(inc["timestamp"])
-            date_str = dt.strftime("%b %d, %Y  %H:%M")
-        except Exception:
-            date_str = inc.get("timestamp", "—")
-
-        osha_tag = (
-            '<span style="background:#fff8f0;border:1px solid #FF6B00;padding:1px 7px;'
-            'border-radius:3px;font-size:11px;font-family:monospace;margin-left:6px;">OSHA</span>'
-            if a.get("osha_recordable") else ""
-        )
-
-        summary = a.get("summary", "—")
-        summary_short = summary[:180] + "…" if len(summary) > 180 else summary
-
-        st.markdown(
-            f'<div style="background:white;border:1px solid #e0d9d0;border-radius:4px;'
-            f'padding:14px;margin-bottom:10px;">'
-            f'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">'
-            f'<div>'
-            f'<span style="background:{sev_color};color:white;padding:3px 10px;border-radius:3px;'
-            f'font-family:monospace;font-size:12px;font-weight:600;">{sev}</span>'
-            f'<span style="font-size:13px;font-weight:600;margin-left:8px;">{a.get("incident_type", "—")}</span>'
-            f'{osha_tag}</div>'
-            f'<span style="font-size:11px;color:{status_color};font-family:monospace;font-weight:bold;">'
-            f'{inc.get("status", "Open")}</span></div>'
-            f'<p style="margin:0;font-size:12px;color:#888;">'
-            f'{inc.get("project", "—")} · {date_str} · Reported by {inc.get("reported_by", "—")}</p>'
-            f'<p style="margin:4px 0 0 0;font-size:13px;">{summary_short}</p>'
-            f'</div>',
-            unsafe_allow_html=True
+            f'<div class="sap-feed-card sap-glass-panel sap-glass-panel--compact sap-card-left-accent" '
+            f'style="--sap-accent:{left_b};">'
+            f'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px;">'
+            f'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
+            f"{get_severity_badge(sev)}"
+            f'<span style="font-size:14px;font-weight:600;color:#F1F5F9;">{itype}</span></div>'
+            f'<span class="sap-muted" style="font-size:11px;white-space:nowrap;">{html.escape(ts_disp)}</span></div>'
+            f'<p style="margin:0 0 10px 0;font-size:14px;color:#8899AA;line-height:1.55;display:-webkit-box;'
+            f'-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">{desc_short}</p>'
+            f'<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">'
+            f'<span class="sap-muted" style="font-size:12px;">{proj} · {rep}</span>'
+            f'<span style="display:inline-flex;align-items:center;">{get_status_dot(status)}</span></div>'
+            f"</div>",
+            unsafe_allow_html=True,
         )
 
 
-# NOTE:
-# `app.py` imports these page modules for navigation. To avoid duplicate widget
-# IDs, `app.py` sets `SAPIENTIA_SKIP_RENDER=1` before importing.
-# When you open a page directly via Streamlit's `pages/` multipage sidebar,
-# that env var is not set, so the page should render normally.
+def _render_critical_card(inc: dict) -> None:
+    a = inc.get("analysis") or {}
+    sev = (a.get("severity") or "CRITICAL").upper()
+    dt = _parse_iso_ts(inc.get("timestamp") or "")
+    ts_disp = dt.strftime("%b %d %H:%M") if dt else html.escape(
+        inc.get("timestamp") or "—"
+    )
+    itype = html.escape(a.get("incident_type") or "—")
+    raw_desc = inc.get("raw_description") or a.get("summary") or "—"
+    desc_short = html.escape(raw_desc[:220]) + ("…" if len(raw_desc) > 220 else "")
+    proj = html.escape(inc.get("project") or "—")
+    rep = html.escape(inc.get("reported_by") or "—")
+    status = inc.get("status") or "Open"
+
+    st.markdown(
+        f'<div class="sap-glass-panel sap-glass-panel--compact sap-card-left-accent" '
+        f'style="--sap-accent:#FF4444;margin-bottom:12px;">'
+        f'<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px;">'
+        f'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
+        f"{get_severity_badge(sev)}"
+        f'<span style="font-size:14px;font-weight:600;color:#F1F5F9;">{itype}</span></div>'
+        f'<span class="sap-muted" style="font-size:11px;">{html.escape(ts_disp)}</span></div>'
+        f'<p style="margin:0 0 10px 0;font-size:14px;color:#8899AA;line-height:1.55;display:-webkit-box;'
+        f'-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">{desc_short}</p>'
+        f'<div style="display:flex;justify-content:space-between;align-items:center;">'
+        f'<span class="sap-muted" style="font-size:12px;">{proj} · {rep}</span>'
+        f'<span style="display:inline-flex;align-items:center;">{get_status_dot(status)}</span></div>'
+        f"</div>",
+        unsafe_allow_html=True,
+    )
+
+
+# When opened via Streamlit multipage sidebar, env var is unset → render here.
 if os.environ.get("SAPIENTIA_SKIP_RENDER") != "1":
     render()
