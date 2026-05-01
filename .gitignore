@@ -4,6 +4,10 @@ notes.txt
 # Python cache/bytecode
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
+.Python
+*.pyc
 *$py.class
 
 # Virtual environments
@@ -21,6 +25,10 @@ ENV/
 build/
 dist/
 *.egg-info/
+
+# Local env + app secrets
+.env
+.streamlit/secrets.toml
 
 # IDE/editor metadata
 .vscode/
