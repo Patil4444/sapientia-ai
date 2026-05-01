@@ -283,7 +283,7 @@ def render():
                     st.download_button(
                         label="Download OSHA Report (PDF)",
                         data=st.session_state[pdf_bkey],
-                        file_name=f"incident_report_{inc.get('id', 'unknown')[:8]}.pdf",
+                        file_name=f"sapientia_report_{inc.get('id','')[:8]}.pdf",
                         mime="application/pdf",
                         key=f"pdf_{inc.get('id', 'unknown')}",
                         use_container_width=True,

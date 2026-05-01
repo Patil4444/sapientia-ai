@@ -45,49 +45,15 @@ sync_backend_url_env_from_streamlit(st.session_state)
 # Global CSS — Sapientia dark UI (palette + typography + components)
 st.markdown("""
 <style>
-/* Nuclear dark override */
 html, body { background-color: #0A0E1A !important; }
-
 [data-testid="stApp"] { background-color: #0A0E1A !important; }
-
-[data-testid="stAppViewContainer"] > .main {
-    background-color: #0A0E1A !important;
-}
-
-.main .block-container {
-    background-color: #0A0E1A !important;
-    padding-top: 2rem !important;
-    padding-bottom: 2rem !important;
-}
-
-/* Force all form inputs dark */
-input, textarea, select,
-[data-baseweb="input"] input,
-[data-baseweb="textarea"] textarea,
-[data-baseweb="select"] > div:first-child {
-    background-color: #0F1520 !important;
-    color: #E8EDF5 !important;
-    border-color: #1A2540 !important;
-}
-
-/* Dropdowns dark */
-[data-baseweb="popover"] [role="listbox"],
-[data-baseweb="popover"] ul,
-[data-baseweb="menu"] {
-    background-color: #0F1520 !important;
-    border: 1px solid #1A2540 !important;
-}
-
-[data-baseweb="option"]:hover,
-[role="option"]:hover {
-    background-color: #141D2B !important;
-}
-
-/* Remove white header */
-header[data-testid="stHeader"] {
-    background-color: #0A0E1A !important;
-    border-bottom: 1px solid #1A2540 !important;
-}
+[data-testid="stAppViewContainer"] > .main { background-color: #0A0E1A !important; }
+.main .block-container { background-color: #0A0E1A !important; }
+input, textarea, [data-baseweb="input"] input, [data-baseweb="textarea"] textarea { background-color: #0F1520 !important; color: #E8EDF5 !important; border-color: #1A2540 !important; }
+[data-baseweb="select"] > div:first-child { background-color: #0F1520 !important; color: #E8EDF5 !important; }
+[data-baseweb="popover"] [role="listbox"] { background-color: #0F1520 !important; border: 1px solid #1A2540 !important; }
+header[data-testid="stHeader"] { background-color: #0A0E1A !important; }
+[data-testid="stSidebarNav"] { display: none !important; }
 
 /* Tables dark */
 [data-testid="stDataFrame"] {
@@ -327,6 +293,15 @@ tbody tr:hover {
   opacity: 0.55;
 }
 
+/* Disable decorative overlays if they obscure UI content */
+.sap-art-layer,
+.sap-orb,
+.sap-mesh-sheen,
+.sap-grain,
+.sap-vignette {
+  display: none !important;
+}
+
 #MainMenu { visibility: hidden; }
 footer { visibility: hidden; }
 
@@ -407,10 +382,7 @@ h1 {
   font-weight: 700 !important;
   letter-spacing: -0.6px !important;
   line-height: 1.15 !important;
-  background: linear-gradient(92deg, #f8fafc 0%, #e2e8f0 38%, #5eead4 72%, #22d3ee 108%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #F1F5F9 !important;
   filter: drop-shadow(0 10px 38px rgba(0, 229, 255, 0.12));
 }
 
