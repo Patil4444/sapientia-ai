@@ -4,12 +4,23 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from utils.data_store import load_incidents, update_incident
-from utils.report_generator import generate_incident_report
+from utils.report_generator import generate_pdf
 
 
 def render():
-    st.markdown("## 📁 Incident Log")
-    st.caption("Search and manage all construction site incident reports")
+    st.markdown("""
+<div style="margin-bottom:20px; padding-bottom:16px; 
+            border-bottom:1px solid #1A2540;">
+    <div style="font-size:11px; color:#3D5068; letter-spacing:1.5px; 
+                text-transform:uppercase; margin-bottom:6px; font-weight:600;">
+        SAPIENTIA AI · OSHA 300/301
+    </div>
+    <h1 style="font-size:26px; font-weight:700; color:#F1F5F9; 
+               margin:0; letter-spacing:-0.3px;">
+        Incident Log
+    </h1>
+</div>
+""", unsafe_allow_html=True)
 
     incidents = load_incidents()
     focus = st.session_state.get("sapientia_focus_project") or ""
@@ -257,7 +268,7 @@ def render():
                 pdf_fkey = f"_log_pdf_fname_{iid}"
                 if st.button("📄 Generate PDF", key=f"pdf_{iid}"):
                     try:
-                        pdf = generate_incident_report(inc)
+                        pdf = generate_pdf(inc)
                         update_incident(inc["id"], {"report_generated": True})
                         fname = f"incident_{iid[:8]}_{datetime.now().strftime('%Y%m%d')}.pdf"
                         st.session_state[pdf_bkey] = pdf
@@ -270,11 +281,11 @@ def render():
 
                 if st.session_state.get(pdf_bkey):
                     st.download_button(
-                        "⬇️ Download",
+                        label="Download OSHA Report (PDF)",
                         data=st.session_state[pdf_bkey],
-                        file_name=st.session_state.get(pdf_fkey) or "incident.pdf",
+                        file_name=f"incident_report_{inc.get('id', 'unknown')[:8]}.pdf",
                         mime="application/pdf",
-                        key=f"dl_{iid}",
+                        key=f"pdf_{inc.get('id', 'unknown')}",
                         use_container_width=True,
                     )
 

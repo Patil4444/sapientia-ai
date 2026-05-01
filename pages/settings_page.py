@@ -4,7 +4,19 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 
 def render():
-    st.markdown("## ⚙️ Settings")
+    st.markdown("""
+<div style="margin-bottom:20px; padding-bottom:16px; 
+            border-bottom:1px solid #1A2540;">
+    <div style="font-size:11px; color:#3D5068; letter-spacing:1.5px; 
+                text-transform:uppercase; margin-bottom:6px; font-weight:600;">
+        SAPIENTIA AI · OSHA 300/301
+    </div>
+    <h1 style="font-size:26px; font-weight:700; color:#F1F5F9; 
+               margin:0; letter-spacing:-0.3px;">
+        Settings
+    </h1>
+</div>
+""", unsafe_allow_html=True)
     st.markdown(
         '<div class="info-box">Configure API keys and alert preferences. Keys are stored in your session only — never saved to disk. '
         'This app does not bill you or enroll you in any plan — optional keys only call Anthropic/SendGrid under <strong>your</strong> accounts if you add them.</div>',

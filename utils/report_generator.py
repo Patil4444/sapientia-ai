@@ -21,23 +21,23 @@ except ImportError:
     REPORTLAB_AVAILABLE = False
 
 
-# Brand colors
-ORANGE = colors.HexColor("#FF6B00")
-DARK   = colors.HexColor("#0f0f0f")
-LIGHT  = colors.HexColor("#f5f2ed")
-RED    = colors.HexColor("#FF1744")
-GREEN  = colors.HexColor("#2E7D32")
-GRAY   = colors.HexColor("#888888")
-WHITE  = colors.white
-BLACK  = colors.black
+# Brand colors (only defined when ReportLab is available).
+if REPORTLAB_AVAILABLE:
+    ORANGE = colors.HexColor("#FF6B00")
+    DARK = colors.HexColor("#0f0f0f")
+    LIGHT = colors.HexColor("#f5f2ed")
+    RED = colors.HexColor("#FF1744")
+    GREEN = colors.HexColor("#2E7D32")
+    GRAY = colors.HexColor("#888888")
+    WHITE = colors.white
+    BLACK = colors.black
 
 
-def generate_incident_report(incident: dict) -> bytes:
-    """Generate a PDF report and return bytes."""
+def generate_pdf(incident: dict) -> bytes:
+    """Generate OSHA incident PDF and return bytes."""
     from utils.http_api import client_api_base
 
     base = client_api_base()
-    # When the FastAPI server runs with SAPIENTIA_API_URL set, skip HTTP (avoid calling self).
     if base and os.environ.get("SAPIENTIA_IS_PDF_WORKER") != "1":
         import httpx
 
@@ -59,267 +59,133 @@ def generate_incident_report(incident: dict) -> bytes:
     if not REPORTLAB_AVAILABLE:
         raise ImportError("ReportLab not installed. Run: pip install reportlab")
 
-    buf = io.BytesIO()
+    analysis = incident.get("analysis", {}) or {}
+    details = incident.get("details", {}) or {}
+    severity = (incident.get("severity") or analysis.get("severity") or "LOW").upper()
+    severity_color = {"CRITICAL": colors.HexColor("#FF4444"), "MEDIUM": colors.HexColor("#FFB020"), "LOW": colors.HexColor("#00D68F")}.get(severity, colors.HexColor("#00D68F"))
+    recordable = bool(incident.get("osha_recordable", analysis.get("osha_recordable", False)))
+    forms_required = incident.get("osha_forms_required") or analysis.get("osha_forms_required") or ["OSHA 300", "OSHA 301"]
+    actions = incident.get("immediate_actions") or analysis.get("immediate_actions_required") or []
+    description = incident.get("description") or incident.get("raw_description") or "—"
+    ai_summary = incident.get("ai_summary") or analysis.get("summary") or "—"
+
+    timestamp = incident.get("timestamp", datetime.now().isoformat())
+    try:
+        incident_dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+        date_text = incident_dt.strftime("%Y-%m-%d %H:%M")
+    except Exception:
+        date_text = timestamp
+
+    buffer = io.BytesIO()
     doc = SimpleDocTemplate(
-        buf,
+        buffer,
         pagesize=letter,
-        leftMargin=0.75 * inch,
-        rightMargin=0.75 * inch,
-        topMargin=0.75 * inch,
-        bottomMargin=0.75 * inch,
+        leftMargin=0.65 * inch,
+        rightMargin=0.65 * inch,
+        topMargin=0.6 * inch,
+        bottomMargin=0.6 * inch,
     )
 
     styles = getSampleStyleSheet()
-    story  = []
+    title_style = ParagraphStyle("title", parent=styles["Heading1"], alignment=TA_CENTER, textColor=colors.white, fontSize=13, fontName="Helvetica-Bold", leading=16)
+    label_style = ParagraphStyle("label", parent=styles["Normal"], fontSize=8, textColor=colors.HexColor("#5B6475"), fontName="Helvetica-Bold")
+    value_style = ParagraphStyle("value", parent=styles["Normal"], fontSize=10, textColor=colors.HexColor("#0F172A"), fontName="Helvetica")
+    body_style = ParagraphStyle("body", parent=styles["Normal"], fontSize=10, leading=14, textColor=colors.HexColor("#0F172A"), alignment=TA_LEFT)
+    footer_style = ParagraphStyle("footer", parent=styles["Normal"], alignment=TA_CENTER, fontSize=8, textColor=colors.HexColor("#5B6475"))
 
-    # ---- Custom styles ----
-    mono_bold = ParagraphStyle("mono_bold", fontName="Courier-Bold",   fontSize=9,  textColor=BLACK)
-    mono_reg  = ParagraphStyle("mono_reg",  fontName="Courier",        fontSize=9,  textColor=BLACK)
-    label_s   = ParagraphStyle("label",     fontName="Helvetica-Bold", fontSize=8,  textColor=GRAY,  spaceAfter=1)
-    value_s   = ParagraphStyle("value",     fontName="Helvetica",      fontSize=10, textColor=BLACK)
-    section_s = ParagraphStyle("section",   fontName="Helvetica-Bold", fontSize=11, textColor=WHITE, spaceAfter=4)
-    sub_s     = ParagraphStyle("sub",       fontName="Helvetica",      fontSize=9,  textColor=GRAY)
-    body_s    = ParagraphStyle("body",      fontName="Helvetica",      fontSize=9,  textColor=BLACK, leading=14)
-    action_s  = ParagraphStyle("action",    fontName="Helvetica",      fontSize=9,  textColor=BLACK, leftIndent=10, leading=14)
+    story = []
 
-    analysis = incident.get("analysis", {})
-    severity = analysis.get("severity", "LOW")
-    sev_color = {"CRITICAL": RED, "MEDIUM": ORANGE, "LOW": GREEN}.get(severity, GRAY)
-
-    # ======================================================
-    # HEADER BLOCK
-    # ======================================================
-    header_data = [[
-        Paragraph("<b>CONSTRUCTSAFE AI</b>", ParagraphStyle("hd", fontName="Courier-Bold", fontSize=16, textColor=ORANGE)),
-        Paragraph(
-            f"<b>CONSTRUCTION SAFETY INCIDENT REPORT</b><br/>"
-            f"<font size=8 color='#888888'>OSHA 300/301 Recordkeeping Format</font>",
-            ParagraphStyle("hd2", fontName="Helvetica-Bold", fontSize=13, textColor=BLACK, alignment=TA_RIGHT)
-        )
-    ]]
-    header_table = Table(header_data, colWidths=[3.5*inch, 3.5*inch])
-    header_table.setStyle(TableStyle([
-        ("VALIGN",      (0,0), (-1,-1), "MIDDLE"),
-        ("LINEBELOW",   (0,0), (-1,-1), 2,        ORANGE),
-        ("BOTTOMPADDING",(0,0),(-1,-1), 8),
+    header = Table([[Paragraph("SAPIENTIA AI — OSHA INCIDENT REPORT", title_style)]], colWidths=[6.9 * inch])
+    header.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#0F1520")),
+        ("LEFTPADDING", (0, 0), (-1, -1), 10),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+        ("TOPPADDING", (0, 0), (-1, -1), 10),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
     ]))
-    story.append(header_table)
-    story.append(Spacer(1, 0.2*inch))
+    story.extend([header, Spacer(1, 10)])
 
-    # ======================================================
-    # SEVERITY BANNER
-    # ======================================================
-    banner_text = f"  ■  SEVERITY: {severity}  |  {analysis.get('incident_type','Unknown')}  |  {'⚠ OSHA RECORDABLE' if analysis.get('osha_recordable') else 'NOT OSHA RECORDABLE'}  "
-    banner = Table([[Paragraph(banner_text, ParagraphStyle("bn", fontName="Courier-Bold", fontSize=10, textColor=WHITE))]],
-                   colWidths=[7*inch])
-    banner.setStyle(TableStyle([
-        ("BACKGROUND",    (0,0), (-1,-1), sev_color),
-        ("TOPPADDING",    (0,0), (-1,-1), 8),
-        ("BOTTOMPADDING", (0,0), (-1,-1), 8),
-        ("LEFTPADDING",   (0,0), (-1,-1), 10),
-    ]))
-    story.append(banner)
-    story.append(Spacer(1, 0.2*inch))
-
-    # ======================================================
-    # SECTION HELPER
-    # ======================================================
-    def section_header(title: str):
-        t = Table([[Paragraph(f"  {title}", section_s)]], colWidths=[7*inch])
-        t.setStyle(TableStyle([
-            ("BACKGROUND", (0,0), (-1,-1), DARK),
-            ("TOPPADDING",    (0,0), (-1,-1), 5),
-            ("BOTTOMPADDING", (0,0), (-1,-1), 5),
-        ]))
-        story.append(t)
-        story.append(Spacer(1, 0.1*inch))
-
-    def field_row(label: str, value: str, label2: str = None, value2: str = None):
-        if label2:
-            row = [[
-                Paragraph(label.upper(), label_s),
-                Paragraph(str(value), value_s),
-                Paragraph(label2.upper(), label_s),
-                Paragraph(str(value2), value_s),
-            ]]
-            t = Table(row, colWidths=[1.2*inch, 2.3*inch, 1.2*inch, 2.3*inch])
-        else:
-            row = [[Paragraph(label.upper(), label_s), Paragraph(str(value), value_s)]]
-            t = Table(row, colWidths=[1.4*inch, 5.6*inch])
-        t.setStyle(TableStyle([
-            ("VALIGN",        (0,0), (-1,-1), "TOP"),
-            ("LINEBELOW",     (0,0), (-1,-1), 0.5, colors.HexColor("#e0d9d0")),
-            ("TOPPADDING",    (0,0), (-1,-1), 5),
-            ("BOTTOMPADDING", (0,0), (-1,-1), 5),
-            ("LEFTPADDING",   (0,0), (-1,-1), 4),
-        ]))
-        story.append(t)
-        story.append(Spacer(1, 0.04*inch))
-
-    # ======================================================
-    # SECTION 1 — REPORT INFORMATION
-    # ======================================================
-    section_header("01  ·  REPORT INFORMATION")
-    ts = incident.get("timestamp", datetime.now().isoformat())
-    try:
-        dt = datetime.fromisoformat(ts)
-        date_str = dt.strftime("%B %d, %Y")
-        time_str = dt.strftime("%H:%M")
-    except Exception:
-        date_str = ts
-        time_str = "—"
-
-    field_row("Report ID",      incident.get("id", "—")[:8].upper(),
-              "Date of Incident", date_str)
-    field_row("Time",           time_str,
-              "Report Status",   incident.get("status", "Open"))
-    field_row("Reported By",    incident.get("reported_by", "—"),
-              "Project",         incident.get("project", "—"))
-    story.append(Spacer(1, 0.15*inch))
-
-    # ======================================================
-    # SECTION 2 — INCIDENT DETAILS
-    # ======================================================
-    section_header("02  ·  INCIDENT DETAILS")
-    field_row("Incident Type",    analysis.get("incident_type", "—"),
-              "Severity",         severity)
-    field_row("Location on Site", analysis.get("location_on_site", "—"),
-              "Equipment/Tools",  analysis.get("equipment_involved", "None"))
-    field_row("Person Affected",  analysis.get("injured_person", "Unknown"),
-              "Body Part",        analysis.get("body_part_affected", "None"))
-    story.append(Spacer(1, 0.1*inch))
-
-    # Severity reason
-    story.append(Paragraph("SEVERITY CLASSIFICATION RATIONALE", label_s))
-    story.append(Paragraph(analysis.get("severity_reason", "—"), body_s))
-    story.append(Spacer(1, 0.1*inch))
-
-    # Immediate cause
-    story.append(Paragraph("IMMEDIATE CAUSE", label_s))
-    story.append(Paragraph(analysis.get("immediate_cause", "—"), body_s))
-    story.append(Spacer(1, 0.15*inch))
-
-    # ======================================================
-    # SECTION 3 — ORIGINAL REPORT (VERBATIM)
-    # ======================================================
-    section_header("03  ·  ORIGINAL INCIDENT DESCRIPTION (VERBATIM)")
-    desc_box = Table(
-        [[Paragraph(incident.get("raw_description", "—"), body_s)]],
-        colWidths=[7*inch]
-    )
-    desc_box.setStyle(TableStyle([
-        ("BACKGROUND",    (0,0), (-1,-1), colors.HexColor("#fff8f0")),
-        ("BOX",           (0,0), (-1,-1), 0.5, ORANGE),
-        ("LEFTPADDING",   (0,0), (-1,-1), 10),
-        ("RIGHTPADDING",  (0,0), (-1,-1), 10),
-        ("TOPPADDING",    (0,0), (-1,-1), 10),
-        ("BOTTOMPADDING", (0,0), (-1,-1), 10),
-    ]))
-    story.append(desc_box)
-    story.append(Spacer(1, 0.1*inch))
-
-    # AI summary
-    story.append(Paragraph("AI-GENERATED SUMMARY", label_s))
-    story.append(Paragraph(analysis.get("summary", "—"), body_s))
-    story.append(Spacer(1, 0.15*inch))
-
-    # ======================================================
-    # SECTION 4 — OSHA COMPLIANCE
-    # ======================================================
-    section_header("04  ·  OSHA COMPLIANCE")
-    recordable = analysis.get("osha_recordable", False)
-    rec_text = "YES — THIS INCIDENT IS OSHA RECORDABLE" if recordable else "NO — NOT OSHA RECORDABLE"
-    rec_color = RED if recordable else GREEN
-
-    rec_banner = Table(
-        [[Paragraph(f"  {rec_text}", ParagraphStyle("rb", fontName="Courier-Bold", fontSize=10, textColor=WHITE))]],
-        colWidths=[7*inch]
-    )
-    rec_banner.setStyle(TableStyle([
-        ("BACKGROUND",    (0,0), (-1,-1), rec_color),
-        ("TOPPADDING",    (0,0), (-1,-1), 6),
-        ("BOTTOMPADDING", (0,0), (-1,-1), 6),
-        ("LEFTPADDING",   (0,0), (-1,-1), 10),
-    ]))
-    story.append(rec_banner)
-    story.append(Spacer(1, 0.08*inch))
-
-    story.append(Paragraph("OSHA RATIONALE", label_s))
-    story.append(Paragraph(analysis.get("osha_reason", "—"), body_s))
-    story.append(Spacer(1, 0.08*inch))
-
-    forms = analysis.get("osha_forms_required", [])
-    if forms:
-        story.append(Paragraph("FORMS REQUIRED", label_s))
-        for f in forms:
-            story.append(Paragraph(f"■  {f}", action_s))
-    story.append(Spacer(1, 0.15*inch))
-
-    # ======================================================
-    # SECTION 5 — IMMEDIATE ACTIONS REQUIRED
-    # ======================================================
-    section_header("05  ·  IMMEDIATE ACTIONS REQUIRED")
-    actions = analysis.get("immediate_actions_required", [])
-    for idx, action in enumerate(actions, 1):
-        row = [[
-            Paragraph(str(idx), ParagraphStyle("num", fontName="Courier-Bold", fontSize=12,
-                                               textColor=WHITE, alignment=TA_CENTER)),
-            Paragraph(action, body_s)
-        ]]
-        t = Table(row, colWidths=[0.35*inch, 6.65*inch])
-        t.setStyle(TableStyle([
-            ("BACKGROUND",    (0,0), (0,-1), ORANGE),
-            ("VALIGN",        (0,0), (-1,-1), "MIDDLE"),
-            ("TOPPADDING",    (0,0), (-1,-1), 6),
-            ("BOTTOMPADDING", (0,0), (-1,-1), 6),
-            ("LEFTPADDING",   (1,0), (1,-1), 10),
-            ("LINEBELOW",     (0,0), (-1,-1), 0.5, colors.HexColor("#e0d9d0")),
-        ]))
-        story.append(t)
-        story.append(Spacer(1, 0.04*inch))
-    story.append(Spacer(1, 0.15*inch))
-
-    # ======================================================
-    # SECTION 6 — SIGNATURES
-    # ======================================================
-    section_header("06  ·  SIGNATURES & REVIEW")
-    sig_data = [
-        ["Safety Manager Signature", "Date", "Superintendent Signature", "Date"],
-        ["", "", "", ""],
-        ["_" * 28, "_" * 12, "_" * 28, "_" * 12],
-        ["Print Name", "Title", "Print Name", "Title"],
-        ["", "", "", ""],
-        ["_" * 28, "_" * 12, "_" * 28, "_" * 12],
+    meta_rows = [
+        [Paragraph("INCIDENT ID", label_style), Paragraph(str(incident.get("id", "unknown")), value_style),
+         Paragraph("DATE", label_style), Paragraph(date_text, value_style)],
+        [Paragraph("PROJECT", label_style), Paragraph(str(incident.get("project", "—")), value_style),
+         Paragraph("REPORTER", label_style), Paragraph(str(incident.get("reporter") or incident.get("reported_by", "—")), value_style)],
     ]
-    sig_table = Table(sig_data, colWidths=[2.2*inch, 1.3*inch, 2.2*inch, 1.3*inch])
-    sig_table.setStyle(TableStyle([
-        ("FONTNAME",      (0,0), (-1,-1), "Helvetica"),
-        ("FONTSIZE",      (0,0), (-1,-1), 8),
-        ("TEXTCOLOR",     (0,0), (-1,-1), GRAY),
-        ("TOPPADDING",    (0,0), (-1,-1), 6),
-        ("BOTTOMPADDING", (0,0), (-1,-1), 2),
-        ("LEFTPADDING",   (0,0), (-1,-1), 4),
+    meta = Table(meta_rows, colWidths=[1.1 * inch, 2.35 * inch, 1.1 * inch, 2.35 * inch])
+    meta.setStyle(TableStyle([
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#D5DEEA")),
+        ("LEFTPADDING", (0, 0), (-1, -1), 6),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
     ]))
-    story.append(sig_table)
-    story.append(Spacer(1, 0.2*inch))
+    story.extend([meta, Spacer(1, 10)])
 
-    # ======================================================
-    # FOOTER
-    # ======================================================
-    footer = Table([[
-        Paragraph("CONSTRUCTSAFE AI  ·  Automated Safety Reporting  ·  Powered by Claude AI",
-                  ParagraphStyle("ft", fontName="Courier", fontSize=8, textColor=GRAY)),
-        Paragraph(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M')}",
-                  ParagraphStyle("ft2", fontName="Courier", fontSize=8, textColor=GRAY, alignment=TA_RIGHT))
-    ]], colWidths=[4.5*inch, 2.5*inch])
-    footer.setStyle(TableStyle([
-        ("LINEABOVE", (0,0), (-1,-1), 1, ORANGE),
-        ("TOPPADDING", (0,0), (-1,-1), 6),
+    sev_badge = Table([[Paragraph(f"SEVERITY: {severity}", ParagraphStyle("sev", alignment=TA_CENTER, textColor=colors.white, fontName="Helvetica-Bold", fontSize=10))]], colWidths=[6.9 * inch])
+    sev_badge.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), severity_color),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
     ]))
-    story.append(footer)
+    story.extend([sev_badge, Spacer(1, 8)])
+
+    story.append(Paragraph(f"<b>OSHA Recordable:</b> {'Yes' if recordable else 'No'}", body_style))
+    story.append(Paragraph(f"<b>OSHA Forms Required:</b> {', '.join(str(f) for f in forms_required)}", body_style))
+    story.append(Spacer(1, 8))
+
+    story.append(Paragraph("<b>Incident Description</b>", value_style))
+    story.append(Paragraph(str(description), body_style))
+    story.append(Spacer(1, 6))
+
+    story.append(Paragraph("<b>AI Summary</b>", value_style))
+    story.append(Paragraph(str(ai_summary), body_style))
+    story.append(Spacer(1, 8))
+
+    story.append(Paragraph("<b>Immediate Actions</b>", value_style))
+    if actions:
+        for action in actions:
+            story.append(Paragraph(f"• {str(action)}", body_style))
+    else:
+        story.append(Paragraph("• None listed", body_style))
+    story.append(Spacer(1, 8))
+
+    details_table = Table(
+        [
+            ["Location", "Person Involved", "Body Part", "Equipment", "Risk Score"],
+            [
+                str(details.get("location") or analysis.get("location_on_site") or "—"),
+                str(details.get("person_involved") or analysis.get("injured_person") or "—"),
+                str(details.get("body_part") or analysis.get("body_part_affected") or "—"),
+                str(details.get("equipment") or analysis.get("equipment_involved") or "—"),
+                str(incident.get("risk_score") if incident.get("risk_score") is not None else analysis.get("risk_score", "—")),
+            ],
+        ],
+        colWidths=[1.35 * inch, 1.45 * inch, 1.2 * inch, 1.45 * inch, 1.45 * inch],
+    )
+    details_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#141D2B")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.HexColor("#E8EDF5")),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#D5DEEA")),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 5),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+    ]))
+    story.extend([details_table, Spacer(1, 10), HRFlowable(width="100%", thickness=0.8, color=colors.HexColor("#D5DEEA"))])
+    story.append(Spacer(1, 6))
+    story.append(Paragraph("Generated by Sapientia AI · OSHA 300/301 Compliant · Confidential", footer_style))
 
     doc.build(story)
-    return buf.getvalue()
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
+def generate_incident_report(incident: dict) -> bytes:
+    """Backward-compatible wrapper for existing callers."""
+    return generate_pdf(incident)
 
 
 def generate_pitch_pack_pdf(incidents: list[dict]) -> bytes:

@@ -26,6 +26,19 @@ def _parse_iso_ts(raw: str) -> datetime | None:
 
 
 def render():
+    st.markdown("""
+<div style="margin-bottom:20px; padding-bottom:16px; 
+            border-bottom:1px solid #1A2540;">
+    <div style="font-size:11px; color:#3D5068; letter-spacing:1.5px; 
+                text-transform:uppercase; margin-bottom:6px; font-weight:600;">
+        SAPIENTIA AI · OSHA 300/301
+    </div>
+    <h1 style="font-size:26px; font-weight:700; color:#F1F5F9; 
+               margin:0; letter-spacing:-0.3px;">
+        Dashboard
+    </h1>
+</div>
+""", unsafe_allow_html=True)
     focus = st.session_state.get("sapientia_focus_project") or ""
     incidents = load_incidents()
     if focus:

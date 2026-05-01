@@ -45,6 +45,123 @@ sync_backend_url_env_from_streamlit(st.session_state)
 # Global CSS — Sapientia dark UI (palette + typography + components)
 st.markdown("""
 <style>
+/* Nuclear dark override */
+html, body { background-color: #0A0E1A !important; }
+
+[data-testid="stApp"] { background-color: #0A0E1A !important; }
+
+[data-testid="stAppViewContainer"] > .main {
+    background-color: #0A0E1A !important;
+}
+
+.main .block-container {
+    background-color: #0A0E1A !important;
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
+}
+
+/* Force all form inputs dark */
+input, textarea, select,
+[data-baseweb="input"] input,
+[data-baseweb="textarea"] textarea,
+[data-baseweb="select"] > div:first-child {
+    background-color: #0F1520 !important;
+    color: #E8EDF5 !important;
+    border-color: #1A2540 !important;
+}
+
+/* Dropdowns dark */
+[data-baseweb="popover"] [role="listbox"],
+[data-baseweb="popover"] ul,
+[data-baseweb="menu"] {
+    background-color: #0F1520 !important;
+    border: 1px solid #1A2540 !important;
+}
+
+[data-baseweb="option"]:hover,
+[role="option"]:hover {
+    background-color: #141D2B !important;
+}
+
+/* Remove white header */
+header[data-testid="stHeader"] {
+    background-color: #0A0E1A !important;
+    border-bottom: 1px solid #1A2540 !important;
+}
+
+/* Tables dark */
+[data-testid="stDataFrame"] {
+    background-color: #0F1520 !important;
+}
+
+thead tr th {
+    background-color: #141D2B !important;
+    color: #8899AA !important;
+}
+
+tbody tr {
+    background-color: #0F1520 !important;
+    color: #E8EDF5 !important;
+}
+
+tbody tr:hover {
+    background-color: #141D2B !important;
+}
+
+/* Expanders dark */
+[data-testid="stExpander"] {
+    background-color: #0F1520 !important;
+    border: 1px solid #1A2540 !important;
+    border-radius: 8px !important;
+}
+
+[data-testid="stExpander"] summary {
+    color: #E8EDF5 !important;
+}
+
+/* Remove the orange completely — no orange anywhere */
+.stButton > button {
+    background-color: transparent !important;
+    border: 1px solid #1A2540 !important;
+    color: #8899AA !important;
+    border-radius: 8px !important;
+}
+
+.stButton > button[kind="primary"] {
+    background-color: #00E5FF !important;
+    color: #0A0E1A !important;
+    border: none !important;
+    font-weight: 700 !important;
+}
+
+.stButton > button:hover {
+    border-color: #00E5FF !important;
+    color: #00E5FF !important;
+}
+
+/* Sidebar buttons override */
+[data-testid="stSidebar"] .stButton > button {
+    background: transparent !important;
+    border: none !important;
+    color: #8899AA !important;
+    text-align: left !important;
+    width: 100% !important;
+    padding: 8px 12px !important;
+    border-radius: 6px !important;
+}
+
+[data-testid="stSidebar"] .stButton > button[kind="primary"] {
+    background: #141D2B !important;
+    color: #00E5FF !important;
+    border-left: 2px solid #00E5FF !important;
+    border-radius: 0 6px 6px 0 !important;
+}
+
+[data-testid="stSidebar"] .stButton > button:hover {
+    background: #141D2B !important;
+    color: #00E5FF !important;
+}
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap');
 
 @keyframes pulse-critical {
@@ -735,6 +852,12 @@ section[data-testid="stSidebar"] .stButton > button[kind="secondary"]:hover {
     transition: none !important;
   }
 }
+</style>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<style>
+[data-testid="stSidebarNav"] { display: none !important; }
 </style>
 """, unsafe_allow_html=True)
 

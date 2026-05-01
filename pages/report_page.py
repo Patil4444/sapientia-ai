@@ -14,7 +14,7 @@ from utils.alerts import send_alert, should_alert
 from utils.badges import get_severity_badge
 from utils.data_store import save_incident, update_incident
 from utils.project_store import get_active_project_names
-from utils.report_generator import generate_incident_report
+from utils.report_generator import generate_pdf
 from utils.training_data import get_sample_scenario_options
 
 
@@ -66,13 +66,19 @@ def _sync_sample_to_body() -> None:
 
 
 def render():
-    st.markdown("## ⬡ Report Incident")
-    st.markdown(
-        '<p style="font-size:14px;color:#8899AA;margin:0 0 16px 0;line-height:1.6;">'
-        "Type what happened below. Details are optional and can be added in "
-        "<strong>Add details</strong>.</p>",
-        unsafe_allow_html=True,
-    )
+    st.markdown("""
+<div style="margin-bottom:20px; padding-bottom:16px; 
+            border-bottom:1px solid #1A2540;">
+    <div style="font-size:11px; color:#3D5068; letter-spacing:1.5px; 
+                text-transform:uppercase; margin-bottom:6px; font-weight:600;">
+        SAPIENTIA AI · OSHA 300/301
+    </div>
+    <h1 style="font-size:26px; font-weight:700; color:#F1F5F9; 
+               margin:0; letter-spacing:-0.3px;">
+        Report Incident
+    </h1>
+</div>
+""", unsafe_allow_html=True)
 
     api_key = st.session_state.get("anthropic_api_key", "")
     if not api_key:
@@ -343,11 +349,10 @@ def render():
         # inside `if st.button(...)`, or it disappears on the next rerun (Streamlit).
         if st.button("📄 Generate OSHA-formatted PDF", key="gen_pdf_report"):
             try:
-                pdf_bytes = generate_incident_report(incident)
+                pdf_bytes = generate_pdf(incident)
                 update_incident(incident_id, {"report_generated": True})
-                fname = f"incident_report_{incident_id[:8]}_{datetime.now().strftime('%Y%m%d')}.pdf"
                 st.session_state["_report_pdf_bytes"] = pdf_bytes
-                st.session_state["_report_pdf_fname"] = fname
+                st.session_state["_report_pdf_fname"] = f"incident_report_{incident.get('id', 'unknown')[:8]}.pdf"
                 st.success("PDF generated — use **Download PDF report** below.")
             except ImportError:
                 st.error("ReportLab not installed. Run: pip install reportlab")
@@ -358,12 +363,12 @@ def render():
         pdf_fname = st.session_state.get("_report_pdf_fname") or "incident_report.pdf"
         if pdf_bytes and st.session_state.get("_report_pdf_incident_id") == incident_id:
             st.download_button(
-                label="⬇️ Download PDF report",
+                label="Download OSHA Report (PDF)",
                 data=pdf_bytes,
-                file_name=pdf_fname,
+                file_name=f"incident_report_{incident.get('id', 'unknown')[:8]}.pdf",
                 mime="application/pdf",
+                key=f"pdf_{incident.get('id', 'unknown')}",
                 use_container_width=True,
-                key=f"dl_pdf_report_{incident_id}",
             )
 
         if analysis.get("_api_error"):
