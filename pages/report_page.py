@@ -2,6 +2,7 @@ import hashlib
 import html
 import os
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
@@ -9,13 +10,14 @@ import streamlit as st
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from utils.agent import analyze_incident, get_severity_emoji
+from utils.agent import analyze_incident, get_severity_emoji, resolve_anthropic_api_key
 from utils.alerts import send_alert, should_alert
 from utils.badges import get_severity_badge
 from utils.data_store import save_incident, update_incident
 from utils.project_store import get_active_project_names
 from utils.report_generator import generate_pdf
 from utils.training_data import get_sample_scenario_options
+from utils.validation import validate_custom_site_name, validate_description
 
 
 _ANALYSIS_EXECUTOR = ThreadPoolExecutor(max_workers=2)
@@ -80,11 +82,12 @@ def render():
 </div>
 """, unsafe_allow_html=True)
 
-    api_key = st.session_state.get("anthropic_api_key", "")
+    api_key = resolve_anthropic_api_key(st.session_state.get("anthropic_api_key", ""))
     if not api_key:
         st.markdown(
-            '<p style="font-size:12px;color:#3D5068;margin:0 0 12px 0;">'
-            "Running in demo mode (rule-based) without an Anthropic API key — add one in Settings for full Claude analysis.</p>",
+            '<div class="info-box"><strong>Free demo mode — no API key required.</strong> '
+            "Analysis uses built-in rule-based logic (severity, OSHA recordability, PDFs). "
+            "Add an optional Anthropic key in Settings for live Claude AI.</div>",
             unsafe_allow_html=True,
         )
 
@@ -110,6 +113,13 @@ def render():
         label_visibility="collapsed",
     )
 
+    reported_by = ""
+    stakeholder_role = STAKEHOLDER_ROLES[0]
+    organization = ""
+    project = _project_options()[0]
+    other_selected = False
+    custom_site = ""
+
     with st.expander("Add details (optional)", expanded=False):
         reported_by = st.text_input(
             "Your name / reporter", placeholder="Leave blank for Anonymous"
@@ -125,18 +135,20 @@ def render():
         proj_index = 0
         if focus and focus in proj_opts:
             proj_index = proj_opts.index(focus)
-        proj_sel = st.selectbox("Project / site", proj_opts, index=proj_index)
+        proj_sel = st.selectbox("Project / site", proj_opts, index=proj_index, key="report_proj_sel")
 
         custom_site = ""
         if proj_sel == "Other (custom site name)":
             custom_site = st.text_input(
-                "Custom site name", placeholder="Type the official job name"
+                "Custom site name", placeholder="Type the official job name", key="report_custom_site"
             )
 
         if proj_sel == "Other (custom site name)":
             project = (custom_site or "").strip() or "Unspecified site"
+            other_selected = True
         else:
             project = proj_sel
+            other_selected = False
 
         st.selectbox(
             "Quick-fill with sample scenario",
@@ -148,6 +160,15 @@ def render():
     reporter = (reported_by or "").strip() or "Anonymous"
     role = stakeholder_role
     org = organization
+
+    desc_len = len((description or "").strip())
+    if desc_len > 0:
+        st.caption(f"{desc_len} characters")
+        if desc_len < 50:
+            st.warning(
+                f"Description is short ({desc_len} chars). "
+                "Aim for at least 50 characters for better AI analysis."
+            )
 
     st.markdown("<br/>", unsafe_allow_html=True)
 
@@ -376,36 +397,47 @@ def render():
 
     job = st.session_state.get("analysis_job")
     if job and job.get("status") == "running" and job.get("future") is not None:
-        if st.button("⏳ Check analysis status", use_container_width=True, key="check_analysis_status"):
-            future = job["future"]
-            if future.done():
-                try:
-                    analysis = future.result()
-                    st.session_state["analysis_job"] = None
-                    _render_results(
-                        description_text=job["description"],
-                        reporter=job["reported_by"],
-                        proj=job["project"],
-                        role=job.get("stakeholder_role", ""),
-                        org=job.get("organization", ""),
-                        analysis=analysis,
-                    )
-                except Exception as e:
-                    st.error(f"Error getting analysis result: {e}")
-                    st.session_state["analysis_job"] = None
-            else:
-                st.info("AI analysis still running. Click again in a moment.")
+        future = job["future"]
+        if future.done():
+            try:
+                analysis = future.result()
+                st.session_state["analysis_job"] = None
+                _render_results(
+                    description_text=job["description"],
+                    reporter=job["reported_by"],
+                    proj=job["project"],
+                    role=job.get("stakeholder_role", ""),
+                    org=job.get("organization", ""),
+                    analysis=analysis,
+                )
+            except Exception as e:
+                st.error(f"Analysis failed: {e}")
+                st.session_state["analysis_job"] = None
+        else:
+            st.markdown(
+                '<div class="info-box" style="display:flex;align-items:center;gap:10px;">'
+                '<span class="sap-loading-dot"></span>'
+                "<span>AI analysis in progress…</span></div>",
+                unsafe_allow_html=True,
+            )
+            time.sleep(2)
+            st.rerun()
 
     if st.button("Analyze & Submit →", type="primary", use_container_width=True, key="report_submit_main"):
         if not (description or "").strip():
             st.error("Please describe what happened before submitting.")
         else:
+            for w in validate_description(description):
+                st.warning(w)
+            for w in validate_custom_site_name(custom_site if other_selected else "", other_selected):
+                st.warning(w)
+
             submission_key = _submission_key_for(
                 description, reporter, project, role, org
             )
             if api_key:
                 future = _ANALYSIS_EXECUTOR.submit(
-                    analyze_incident, description, api_key=api_key or None
+                    analyze_incident, description, api_key=api_key
                 )
                 st.session_state["analysis_job"] = {
                     "status": "running",
@@ -417,7 +449,7 @@ def render():
                     "stakeholder_role": role,
                     "organization": org,
                 }
-                st.info("AI analysis started in background. Click 'Check analysis status' when ready.")
+                st.rerun()
             else:
                 with st.spinner("Analyzing incident…"):
                     analysis = analyze_incident(description, api_key=None)

@@ -3,7 +3,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue?style=flat&logo=python)](https://python.org)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.32+-red?style=flat&logo=streamlit)](https://streamlit.io)
-[![Claude API](https://img.shields.io/badge/Powered_by-Claude_AI-orange?style=flat)](https://anthropic.com)
+[![Claude](https://img.shields.io/badge/Powered_by-Claude_Sonnet_4.6-blue?style=flat)](https://www.anthropic.com)
 [![OSHA](https://img.shields.io/badge/OSHA-300%2F301_Compliant-green?style=flat)](https://osha.gov)
 
 ---
@@ -38,7 +38,7 @@ Safety incident reporting on construction sites is slow, inconsistent, and error
 Language:      Python 3.11+
 UI Framework:  Streamlit
 API (optional): FastAPI + Uvicorn (REST backend for shared data / multi-client)
-AI Core:       Anthropic Claude API (claude-opus-4-6)
+AI Core:       LangChain + Anthropic Claude Sonnet 4.6 (claude-sonnet-4-6)
 PDF Engine:    ReportLab
 Email Alerts:  SendGrid
 Data Storage:  JSON (file-based, no DB dependency)
@@ -61,7 +61,7 @@ constructsafe/
 │   ├── log_page.py            # Searchable incident log + PDF export
 │   └── settings_page.py       # API key config + about
 ├── utils/
-│   ├── agent.py               # AI agent core (Claude API + rule-based fallback)
+│   ├── agent.py               # AI agent core (LangChain + Claude + rule-based fallback)
 │   ├── data_store.py          # JSON persistence layer + sample data
 │   ├── http_api.py            # Optional FastAPI mode: SAPIENTIA_API_URL sync from Settings
 │   ├── report_generator.py    # OSHA-formatted PDF generation (ReportLab)
@@ -120,7 +120,7 @@ API keys are configured in the **Settings** page within the app. No `.env` file 
 
 | Setting | Required | Purpose |
 |---|---|---|
-| Anthropic API Key | Optional | Full AI analysis (Claude). Without it, runs rule-based demo mode. |
+| Anthropic API Key | Optional | Full AI analysis (Claude Sonnet 4.6). Without it, runs rule-based demo mode. |
 | SendGrid API Key | Optional | Real email alerts. Without it, alerts are simulated to console. |
 | Alert Email | Optional | Recipient email for safety manager alerts. |
 
@@ -131,7 +131,7 @@ API keys are configured in the **Settings** page within the app. No `.env` file 
 This codebase does **not** sign you up for any subscription, payment plan, or in-app billing. There is no Stripe (or similar) integration.
 
 - **Streamlit + FastAPI + Uvicorn + ReportLab** run on your machine; they do not charge you through this app.
-- **Optional usage-based cost** happens only if **you** add your own API keys under **Settings** (Anthropic for Claude, SendGrid for email). Usage is billed by those providers per their pricing, not by Sapientia.
+- **Optional usage-based cost** happens only if **you** add your own API keys under **Settings** (Anthropic Claude for AI analysis, SendGrid for email). Usage is billed by those providers per their pricing, not by Sapientia.
 - Without those keys, the app uses **free local fallbacks** (rule-based analysis, simulated alerts).
 
 ---
@@ -152,7 +152,7 @@ The agent follows a 5-step pipeline:
 5. OUTPUT         PDF report + alert dispatch + dashboard log
 ```
 
-**Claude system prompt** instructs the model to return structured JSON only, covering all OSHA-relevant fields. The fallback uses keyword matching for demo purposes.
+**LangChain + Claude** system prompt instructs the model to return structured JSON only, covering all OSHA-relevant fields. The fallback uses keyword matching for demo purposes.
 
 ---
 
@@ -177,9 +177,9 @@ This tool is designed to assist with OSHA 300/301 recordkeeping as defined in **
 ## Resume Bullet Points
 
 ```
-Sapientia — AI Safety Incident Reporting Agent  |  Python · Claude API · Streamlit
+Sapientia — AI Safety Incident Reporting Agent  |  Python · LangChain · Claude · Streamlit
 • Built end-to-end AI automation agent reducing safety incident documentation time by ~70%,
-  auto-generating OSHA-compliant reports from unstructured worker input using Claude LLM
+  auto-generating OSHA-compliant reports from unstructured worker input using Claude via LangChain
 • Implemented severity classification (LOW/MEDIUM/CRITICAL) and OSHA 300/301 recordability
   determination, eliminating manual compliance review bottlenecks
 • Deployed full-stack web application with real-time alert dispatch, PDF report generation

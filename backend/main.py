@@ -9,6 +9,10 @@ _ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
 
+from dotenv import load_dotenv
+
+load_dotenv(os.path.join(_ROOT, ".env"))
+
 # This process generates PDFs in-process. Prevents utils.report_generator from
 # delegating via HTTP to the same host when SAPIENTIA_API_URL is set globally.
 os.environ["SAPIENTIA_IS_PDF_WORKER"] = "1"
@@ -21,12 +25,20 @@ from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from utils import data_store, project_store
-from utils.agent import analyze_incident
+from utils.agent import analyze_incident, resolve_anthropic_api_key
+from utils.validation import validate_analyze_request
 from utils.alerts import send_alert
 from utils.report_generator import (
     REPORTLAB_AVAILABLE,
     generate_incident_report,
     generate_pitch_pack_pdf,
+    generate_toolbox_talk_pdf,
+)
+from utils.toolbox_talk import (
+    INCIDENT_TYPES,
+    SEVERITY_LEVELS,
+    TRADES,
+    generate_toolbox_talk,
 )
 
 app = FastAPI(title="Sapientia API", version="1.0")
@@ -69,13 +81,27 @@ class PitchPackRequest(BaseModel):
     incidents: list[dict] = Field(default_factory=list)
 
 
+class ToolboxTalkRequest(BaseModel):
+    trade: str
+    incident_type: str
+    severity: str
+    api_key: str = ""
+
+
 @app.get("/api/health")
 def health():
     return {
         "status": "ok",
         "service": "sapientia-api",
         "reportlab": REPORTLAB_AVAILABLE,
-        "pdf_routes": ["/api/reports/incident-pdf", "/api/reports/pitch-pack-pdf"],
+        "pdf_routes": [
+            "/api/reports/incident-pdf",
+            "/api/reports/pitch-pack-pdf",
+            "/api/reports/toolbox-talk-pdf",
+        ],
+        "toolbox_talk_trades": TRADES,
+        "toolbox_talk_incident_types": INCIDENT_TYPES,
+        "toolbox_talk_severity_levels": SEVERITY_LEVELS,
     }
 
 
@@ -132,8 +158,14 @@ def patch_project(project_id: str, body: dict[str, Any] = Body(...)):
 
 @app.post("/api/analyze")
 def post_analyze(req: AnalyzeRequest):
-    key = (req.api_key or "").strip() or None
-    return analyze_incident(req.raw_text, api_key=key)
+    warnings, err = validate_analyze_request(req.raw_text)
+    if err:
+        raise HTTPException(status_code=422, detail=err)
+    key = resolve_anthropic_api_key(req.api_key)
+    result = analyze_incident(req.raw_text.strip(), api_key=key)
+    if warnings:
+        result["_validation_warnings"] = warnings
+    return result
 
 
 @app.post("/api/reports/incident-pdf")
@@ -163,6 +195,44 @@ def post_pitch_pack_pdf(req: PitchPackRequest):
         content=pdf,
         media_type="application/pdf",
         headers={"Content-Disposition": 'attachment; filename="pitch_pack.pdf"'},
+    )
+
+
+@app.post("/api/toolbox-talk/generate")
+def post_toolbox_talk_generate(req: ToolboxTalkRequest):
+    if req.trade not in TRADES:
+        raise HTTPException(status_code=422, detail=f"Invalid trade. Choose one of: {TRADES}")
+    if req.incident_type not in INCIDENT_TYPES:
+        raise HTTPException(status_code=422, detail=f"Invalid incident_type. Choose one of: {INCIDENT_TYPES}")
+    if req.severity not in SEVERITY_LEVELS:
+        raise HTTPException(status_code=422, detail=f"Invalid severity. Choose one of: {SEVERITY_LEVELS}")
+
+    prev_api_url = os.environ.pop("SAPIENTIA_API_URL", None)
+    try:
+        key = resolve_anthropic_api_key(req.api_key)
+        return generate_toolbox_talk(
+            req.trade,
+            req.incident_type,
+            req.severity,
+            api_key=key,
+        )
+    finally:
+        if prev_api_url is not None:
+            os.environ["SAPIENTIA_API_URL"] = prev_api_url
+
+
+@app.post("/api/reports/toolbox-talk-pdf")
+def post_toolbox_talk_pdf(talk: dict[str, Any] = Body(...)):
+    try:
+        pdf = generate_toolbox_talk_pdf(talk)
+    except ImportError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"PDF generation failed: {e}") from e
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={"Content-Disposition": 'attachment; filename="toolbox_talk.pdf"'},
     )
 
 

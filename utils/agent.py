@@ -2,15 +2,17 @@ import json
 import re
 from datetime import datetime
 import time
-import anthropic
 import hashlib
 import copy
+import os
 
 # ---------------------------------------------------------------------------
-# Core agent — uses Claude to parse, classify, and structure raw incident text.
+# Core agent — uses Claude Sonnet to parse, classify, and structure raw incident text.
 # Trained with real open-source construction incidents (2020–present) so
 # classification aligns with OSHA/BLS patterns and incidents this platform would have helped prevent.
 # ---------------------------------------------------------------------------
+
+ANTHROPIC_MODEL = "claude-sonnet-4-6"
 
 SYSTEM_PROMPT_BASE = """You are a construction safety specialist AI agent embedded in an incident reporting system.
 Your job is to analyze raw incident reports submitted by construction workers and extract structured data.
@@ -54,6 +56,17 @@ Severity guidelines (aligned with real incident data 2020+):
 OSHA recordability: Recordable if days away from work, restricted work, transfer, medical treatment beyond first aid, loss of consciousness, or significant injury/illness diagnosis."""
 
 
+def resolve_anthropic_api_key(explicit: str | None = None) -> str | None:
+    """Resolve Anthropic API key from explicit value, then environment."""
+    key = (explicit or "").strip()
+    if key:
+        return key
+    env_val = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+    if env_val:
+        return env_val
+    return None
+
+
 def _build_system_prompt_with_training() -> str:
     """Append few-shot examples from real construction incidents (2020–present) to improve classification."""
     try:
@@ -61,7 +74,6 @@ def _build_system_prompt_with_training() -> str:
         incidents = load_real_incidents()
         if not incidents:
             return SYSTEM_PROMPT_BASE
-        # Add 3 short examples: report excerpt -> correct type + severity
         examples = []
         for inc in incidents[:3]:
             raw = inc.get("raw_description", "")[:200]
@@ -77,6 +89,96 @@ def _build_system_prompt_with_training() -> str:
     return SYSTEM_PROMPT_BASE
 
 
+def _get_anthropic_llm(api_key: str):
+    from langchain_anthropic import ChatAnthropic
+
+    return ChatAnthropic(
+        model=ANTHROPIC_MODEL,
+        api_key=api_key,
+        temperature=0.2,
+        max_tokens=1024,
+    )
+
+
+def _parse_llm_json(content: str) -> dict:
+    raw = (content or "").strip()
+    raw = re.sub(r"^```(?:json)?\s*", "", raw)
+    raw = re.sub(r"\s*```$", "", raw)
+    return json.loads(raw)
+
+
+def _extract_token_usage(response) -> tuple[int | None, int | None, int | None]:
+    meta = getattr(response, "response_metadata", None) or {}
+    usage = meta.get("token_usage") or meta.get("usage_metadata") or {}
+    if hasattr(usage, "prompt_token_count"):
+        return (
+            getattr(usage, "prompt_token_count", None),
+            getattr(usage, "candidates_token_count", None),
+            getattr(usage, "total_token_count", None),
+        )
+    input_tokens = usage.get("input_tokens") or usage.get("prompt_token_count")
+    output_tokens = usage.get("output_tokens") or usage.get("candidates_token_count")
+    total_tokens = usage.get("total_tokens") or usage.get("total_token_count")
+    return input_tokens, output_tokens, total_tokens
+
+
+def _call_claude(raw_text: str, api_key: str) -> dict:
+    from langchain_core.messages import HumanMessage, SystemMessage
+
+    system_prompt = _build_system_prompt_with_training()
+    cache_key = _build_analysis_cache_key(api_key=api_key, model=ANTHROPIC_MODEL, raw_text=raw_text)
+    cached = _analysis_cache_get(cache_key)
+    if cached is not None:
+        analysis = copy.deepcopy(cached)
+        analysis.setdefault("_llm", {})
+        analysis["_llm"]["cache_hit"] = True
+        analysis["_llm"]["mode"] = "claude"
+        return analysis
+
+    llm = _get_anthropic_llm(api_key)
+    messages = [
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=f"Analyze this incident report:\n\n{raw_text}"),
+    ]
+
+    max_attempts = 3
+    last_error = None
+    for attempt in range(1, max_attempts + 1):
+        try:
+            t0 = time.perf_counter()
+            response = llm.invoke(messages)
+            t1 = time.perf_counter()
+            content = response.content
+            if not isinstance(content, str):
+                content = str(content or "")
+            analysis = _parse_llm_json(content)
+            analysis = _normalize_analysis(analysis, raw_text=raw_text)
+
+            input_tokens, output_tokens, total_tokens = _extract_token_usage(response)
+
+            analysis["_llm"] = {
+                "model": ANTHROPIC_MODEL,
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "total_tokens": total_tokens,
+                "latency_seconds": round(t1 - t0, 3),
+                "mode": "claude",
+                "attempt": attempt,
+                "cache_hit": False,
+            }
+
+            _analysis_cache_set(cache_key, analysis)
+            return analysis
+        except Exception as e:
+            last_error = e
+            if attempt < max_attempts:
+                time.sleep(2 ** (attempt - 1))
+                continue
+            break
+
+    raise RuntimeError(f"Claude analysis failed after retries: {last_error}")
+
+
 def analyze_incident(raw_text: str, api_key: str = None) -> dict:
     """
     Send incident text to Claude and get structured analysis back.
@@ -88,79 +190,29 @@ def analyze_incident(raw_text: str, api_key: str = None) -> dict:
     if base:
         import httpx
 
-        r = httpx.post(
-            f"{base}/api/analyze",
-            json={"raw_text": raw_text, "api_key": api_key or ""},
-            timeout=120.0,
-        )
-        r.raise_for_status()
-        return r.json()
-
-    if api_key:
         try:
-            system_prompt = _build_system_prompt_with_training()
-            client = anthropic.Anthropic(api_key=api_key)
+            r = httpx.post(
+                f"{base}/api/analyze",
+                json={"raw_text": raw_text, "api_key": api_key or ""},
+                timeout=120.0,
+            )
+            r.raise_for_status()
+            return r.json()
+        except httpx.HTTPStatusError as e:
+            from utils.http_api import format_backend_http_error
 
-            model = "claude-opus-4-6"
-            cache_key = _build_analysis_cache_key(api_key=api_key, model=model, raw_text=raw_text)
-            cached = _analysis_cache_get(cache_key)
-            if cached is not None:
-                analysis = copy.deepcopy(cached)
-                analysis.setdefault("_llm", {})
-                analysis["_llm"]["cache_hit"] = True
-                analysis["_llm"]["mode"] = "claude"
-                return analysis
+            raise RuntimeError(
+                format_backend_http_error(e, base, context="analyze API")
+            ) from e
 
-            max_attempts = 3
-            last_error = None
-            for attempt in range(1, max_attempts + 1):
-                try:
-                    t0 = time.perf_counter()
-                    message = client.messages.create(
-                        model=model,
-                        max_tokens=1024,
-                        system=system_prompt,
-                        messages=[
-                            {"role": "user", "content": f"Analyze this incident report:\n\n{raw_text}"}
-                        ],
-                    )
-                    t1 = time.perf_counter()
-                    raw = message.content[0].text.strip()
-                    # Strip any accidental markdown fences
-                    raw = re.sub(r"^```(?:json)?\s*", "", raw)
-                    raw = re.sub(r"\s*```$", "", raw)
-                    analysis = json.loads(raw)
-                    analysis = _normalize_analysis(analysis, raw_text=raw_text)
-
-                    # Attach LLM metadata for demo/traceability (not part of the model contract)
-                    usage = getattr(message, "usage", None) or {}
-                    analysis["_llm"] = {
-                        "model": getattr(message, "model", model),
-                        "input_tokens": usage.get("input_tokens"),
-                        "output_tokens": usage.get("output_tokens"),
-                        "total_tokens": usage.get("total_tokens"),
-                        "latency_seconds": round(t1 - t0, 3),
-                        "mode": "claude",
-                        "attempt": attempt,
-                        "cache_hit": False,
-                    }
-
-                    _analysis_cache_set(cache_key, analysis)
-                    return analysis
-                except Exception as e:
-                    last_error = e
-                    if attempt < max_attempts:
-                        backoff_s = 2 ** (attempt - 1)
-                        time.sleep(backoff_s)
-                        continue
-                    break
+    resolved_key = resolve_anthropic_api_key(api_key)
+    if resolved_key:
+        try:
+            return _call_claude(raw_text, resolved_key)
         except Exception as e:
             return _mock_analysis(raw_text, error=str(e))
-    else:
-        return _mock_analysis(raw_text)
 
-    # If we reached here, Claude calls failed after retries.
-    return _mock_analysis(raw_text, error=f"Claude analysis failed after retries: {last_error}")
+    return _mock_analysis(raw_text)
 
 
 _ANALYSIS_CACHE: dict[str, tuple[float, dict]] = {}
@@ -195,7 +247,6 @@ def _mock_analysis(text: str, error: str = None) -> dict:
     """
     text_stripped = text.strip()
     text_lower = text_stripped.lower()
-    # Try to match against real training incidents first (so real 2020+ scenarios classify correctly)
     try:
         from utils.training_data import load_real_incidents
         for inc in load_real_incidents():
@@ -205,7 +256,6 @@ def _mock_analysis(text: str, error: str = None) -> dict:
     except Exception:
         pass
 
-    # Classify severity (aligned with real incident patterns 2020+)
     critical_keywords = ["fall", "fell", "fracture", "broken", "unconscious", "hospitali",
                          "blood", "severe", "electrocuted", "crushed", "trapped", "fatality", "fatal",
                          "trench", "collapse", "amputation", "lockout", "loto", "confined space", "hot work",
@@ -220,7 +270,6 @@ def _mock_analysis(text: str, error: str = None) -> dict:
     else:
         severity = "LOW"
 
-    # Incident type
     if any(k in text_lower for k in ["fall", "fell", "roof", "scaffold", "ladder", "height"]):
         itype = "Fall"
     elif any(k in text_lower for k in ["electric", "shock", "wire", "current"]):
@@ -365,7 +414,6 @@ def _compute_risk_score(severity: str, itype: str, osha_recordable: bool, text: 
     (0-100) where severity + OSHA recordability dominate.
     """
     base = {"CRITICAL": 90, "MEDIUM": 60, "LOW": 25}.get(severity, 30)
-    # Small boosts for incident types that tend to have higher consequence volatility.
     type_boost = 0
     if itype in ("Electrical", "Fire/Explosion", "Chemical Exposure"):
         type_boost += 8
@@ -375,7 +423,6 @@ def _compute_risk_score(severity: str, itype: str, osha_recordable: bool, text: 
         type_boost -= 10
 
     recordable_boost = 6 if osha_recordable else 0
-    # Keyword-based escalation for demo.
     escalation = 0
     for k in ["fracture", "amputation", "trapped", "electrocuted", "fatal", "hospital", "unconscious", "collapse"]:
         if k in text:
@@ -393,11 +440,10 @@ def _risk_score_reason_from_inputs(severity: str, osha_recordable: bool, itype: 
 def _extract_evidence_snippets(raw_text: str, text_lower: str = None, max_snippets: int = 3) -> list[str]:
     """
     Extract short snippets that justify severity/risk.
-    Used by demo/mocks and as a fallback when Claude output is missing.
+    Used by demo/mocks and as a fallback when model output is missing.
     """
     if text_lower is None:
         text_lower = raw_text.lower()
-    # Split into short sentence-ish chunks.
     parts = [p.strip() for p in re.split(r"[.\n]", raw_text) if p.strip()]
     keywords = [
         "fell", "fracture", "unconscious", "hospital", "electrocut", "shock", "amput", "trench",
@@ -411,7 +457,6 @@ def _extract_evidence_snippets(raw_text: str, text_lower: str = None, max_snippe
         if len(picked) >= max_snippets:
             break
     if not picked:
-        # Fallback: take first sentences.
         picked = [parts[0][:140], parts[1][:140]] if len(parts) > 1 else [parts[0][:140]] if parts else ["No evidence snippets extracted."]
     return picked[:max_snippets]
 
@@ -424,7 +469,6 @@ def _normalize_analysis(analysis: dict, raw_text: str) -> dict:
     if not isinstance(analysis, dict):
         return _mock_analysis(raw_text, error="Invalid model output type (expected JSON object).")
 
-    # Versioning / defaults
     analysis.setdefault("analysis_schema_version", 3)
     analysis.setdefault("incident_type", "Other")
     analysis.setdefault("severity", "LOW")
@@ -439,7 +483,6 @@ def _normalize_analysis(analysis: dict, raw_text: str) -> dict:
     analysis.setdefault("immediate_actions_required", [])
     analysis.setdefault("summary", "Incident report submitted. Please review and verify fields.")
 
-    # Risk/explainability: compute if missing.
     sev = analysis.get("severity", "LOW")
     itype = analysis.get("incident_type", "Other")
     rec = bool(analysis.get("osha_recordable", False))
@@ -448,7 +491,6 @@ def _normalize_analysis(analysis: dict, raw_text: str) -> dict:
     if not analysis.get("evidence_snippets"):
         analysis["evidence_snippets"] = _extract_evidence_snippets(raw_text, text_lower=raw_text.lower(), max_snippets=3)
 
-    # Efficiency + sustainability: compute if missing.
     text_lower = raw_text.lower()
     analysis.setdefault(
         "environmental_hazard_score",
@@ -479,14 +521,12 @@ def _normalize_analysis(analysis: dict, raw_text: str) -> dict:
         _get_efficiency_actions_required(severity=sev, itype=itype, text_lower=text_lower, max_items=4),
     )
 
-    # Ensure booleans / types are sensible for the UI.
     analysis["osha_recordable"] = bool(analysis.get("osha_recordable", False))
     try:
         analysis["risk_score"] = int(analysis.get("risk_score", 0))
     except Exception:
         analysis["risk_score"] = _compute_risk_score(severity=sev, itype=itype, osha_recordable=rec, text=raw_text.lower())
 
-    # Coerce new numeric scores.
     try:
         analysis["environmental_hazard_score"] = int(analysis.get("environmental_hazard_score", 0))
     except Exception:
@@ -518,23 +558,8 @@ def _compute_environmental_hazard_score(itype: str, text_lower: str) -> int:
 
     boost = 0
     for k in [
-        "spill",
-        "release",
-        "chemical",
-        "solvent",
-        "fume",
-        "vapor",
-        "burn",
-        "fire",
-        "explosion",
-        "washed with water",
-        "hot work",
-        "soot",
-        "smoke",
-        "extinguis",
-        "foam",
-        "runoff",
-        "hose",
+        "spill", "release", "chemical", "solvent", "fume", "vapor", "burn", "fire", "explosion",
+        "washed with water", "hot work", "soot", "smoke", "extinguis", "foam", "runoff", "hose",
     ]:
         if k in text_lower:
             boost += 5
@@ -549,7 +574,6 @@ def _environmental_hazard_reason_from_inputs(itype: str, score: int) -> str:
 def _get_sustainability_concerns(itype: str, text_lower: str, max_items: int = 4) -> list[str]:
     concerns = []
 
-    # OPS/ESG angle for the categories most likely to appear in investor demos.
     if itype == "Fall":
         concerns.append("Dropped/fragmented materials create waste and disposal load")
         concerns.append("Cleanup may release debris to soil or storm drains if not contained")
@@ -567,7 +591,6 @@ def _get_sustainability_concerns(itype: str, text_lower: str, max_items: int = 4
         if "runoff" in text_lower or "washed" in text_lower or "foam" in text_lower or "hose" in text_lower:
             concerns.append("Firefighting runoff/wash-down contamination risk for soil/water")
 
-    # Keep existing chemical indicators (often strongly ESG-relevant too).
     if itype == "Chemical Exposure" or "spill" in text_lower or "chemical" in text_lower:
         concerns.append("Potential chemical release to soil/water")
         concerns.append("Contaminated PPE/waste handling risk")
@@ -579,7 +602,6 @@ def _get_sustainability_concerns(itype: str, text_lower: str, max_items: int = 4
     if itype == "Near Miss":
         concerns.append("Waste and carbon impacts from repeated incidents can be avoided with stronger controls")
 
-    # De-duplicate while preserving order.
     seen = set()
     unique = []
     for c in concerns:
@@ -601,7 +623,6 @@ def _get_sustainability_actions_required(itype: str, text_lower: str, max_items:
             "Use dust suppression or controlled clean-up methods if particulates are generated during removal",
             "Update scaffold/ladder inspection checklist and require documented sign-off before work starts",
         ]
-
     elif itype == "Electrical":
         actions += [
             "Strengthen LOTO compliance (pre-task checklist + sign-off + verification point at the panel/work location)",
@@ -609,7 +630,6 @@ def _get_sustainability_actions_required(itype: str, text_lower: str, max_items:
             "Stop unnecessary replacements: repair/replace decisions require documented fault verification",
             "Ensure any removed components are handled as e-waste/material waste per approved vendor stream",
         ]
-
     elif itype == "Fire/Explosion":
         actions += [
             "Implement hot-work controls (permit, gas monitoring, fire watch, and smoke/dust mitigation plan)",
@@ -618,7 +638,6 @@ def _get_sustainability_actions_required(itype: str, text_lower: str, max_items:
             "Capture root cause + inspection findings to prevent repeat hot-work downtime and rework",
         ]
 
-    # Chemical remains first-class ESG.
     if not actions and (itype == "Chemical Exposure" or "spill" in text_lower or "chemical" in text_lower):
         actions += [
             "Contain and isolate the spill area; use spill kit and follow SDS",
@@ -627,7 +646,6 @@ def _get_sustainability_actions_required(itype: str, text_lower: str, max_items:
             "Document environmental controls and corrective prevention steps",
         ]
 
-    # Generic but still ops-friendly fallback if none of the above matched.
     if not actions:
         actions += [
             "Review environmental risks in the task plan (JHA) and set measurable control checks before start",
@@ -648,18 +666,8 @@ def _compute_efficiency_score(severity: str, itype: str, text_lower: str) -> int
 
     boost = 0
     for k in [
-        "didn't follow",
-        "notified",
-        "wasn't",
-        "lockout",
-        "loto",
-        "schedule",
-        "no entry",
-        "gave way",
-        "broke",
-        "failure to communicate",
-        "urgent care",
-        "equipment failure",
+        "didn't follow", "notified", "wasn't", "lockout", "loto", "schedule", "no entry",
+        "gave way", "broke", "failure to communicate", "urgent care", "equipment failure",
     ]:
         if k in text_lower:
             boost += 4
@@ -717,7 +725,6 @@ def _get_efficiency_actions_required(severity: str, itype: str, text_lower: str,
             "Set a lightweight corrective action cadence (weekly follow-up) for closure",
         ]
 
-    # Small additions based on generic signals.
     if "schedule" in text_lower or "lift schedule" in text_lower:
         actions.insert(0, "Fix lift/entry scheduling communication so crews work only inside cleared zones")
 

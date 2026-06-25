@@ -4,7 +4,7 @@ import sys, os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from utils.agent import analyze_incident, get_severity_color, get_severity_emoji
+from utils.agent import analyze_incident, get_severity_color, get_severity_emoji, resolve_anthropic_api_key
 from utils.data_store import save_incident, update_incident, load_incidents
 from utils.report_generator import generate_incident_report, generate_pitch_pack_pdf
 from utils.alerts import send_alert, should_alert
@@ -52,7 +52,7 @@ def render():
         "Use it to demonstrate real business value quickly."
     )
 
-    api_key = st.session_state.get("anthropic_api_key", "")
+    api_key = resolve_anthropic_api_key(st.session_state.get("anthropic_api_key", ""))
     sendgrid_key = st.session_state.get("sendgrid_key", "")
     recipient = st.session_state.get("alert_email", "")
 

@@ -209,5 +209,477 @@
     "report_generated": false,
     "id": "045e455b-3273-40ac-af57-5b5554bbd60b",
     "timestamp": "2026-04-20T23:01:40.587188"
+  },
+  {
+    "reported_by": "Anonymous",
+    "project": "Harbor View Tower - Phase 2",
+    "stakeholder_role": "General contractor (GC)",
+    "organization": "",
+    "raw_description": "Worker fell from scaffolding from level 3, approx. height 8 feet",
+    "analysis": {
+      "analysis_schema_version": 3,
+      "incident_type": "Fall",
+      "severity": "CRITICAL",
+      "severity_reason": "Classified as CRITICAL based on keywords detected in report.",
+      "injured_person": "Unknown",
+      "body_part_affected": "Unknown",
+      "location_on_site": "General site",
+      "equipment_involved": "None",
+      "immediate_cause": "Under investigation \u2014 see full incident description.",
+      "osha_recordable": true,
+      "osha_reason": "Likely requires medical treatment beyond first aid.",
+      "osha_forms_required": [
+        "OSHA 300",
+        "OSHA 301"
+      ],
+      "risk_score": 100,
+      "risk_score_reason": "Risk scored mainly from CRITICAL severity plus incident category (Fall) and OSHA recordable.",
+      "evidence_snippets": [
+        "Worker fell from scaffolding from level 3, approx"
+      ],
+      "environmental_hazard_score": 20,
+      "environmental_hazard_reason": "Environmental hazard assessed as low based on incident category and environmental-release indicators.",
+      "sustainability_concerns": [
+        "Dropped/fragmented materials create waste and disposal load",
+        "Cleanup may release debris to soil or storm drains if not contained"
+      ],
+      "sustainability_actions_required": [
+        "Contain fallen/debris materials during cleanup (no loose debris near drains; use lined collection bins)",
+        "Segregate damaged scaffold/ladder components into waste streams (recycle/landfill per site SOP)",
+        "Use dust suppression or controlled clean-up methods if particulates are generated during removal",
+        "Update scaffold/ladder inspection checklist and require documented sign-off before work starts"
+      ],
+      "efficiency_score": 90,
+      "efficiency_score_reason": "Efficiency opportunity driven by high-impact incident impact (Fall) and process-control gaps detected in the report.",
+      "efficiency_actions_required": [
+        "Introduce a standardized scaffold/ladder inspection schedule with documented sign-off per shift",
+        "Implement dropped-object/fall prevention checks (guards, planks, access) as a pre-start gate",
+        "Reduce downtime by ensuring replacement components are staged on-site for rapid corrections",
+        "Run short interval toolbox talks focused on the specific failure mode detected"
+      ],
+      "immediate_actions_required": [
+        "Secure the area and prevent further hazards",
+        "Provide first aid or call 911 if needed",
+        "Notify safety manager immediately",
+        "Preserve evidence for investigation"
+      ],
+      "summary": "Incident report submitted. AI analysis completed using rule-based fallback (no API key configured). Incident classified as Fall with CRITICAL severity. Please review and verify all fields."
+    },
+    "status": "Open",
+    "report_generated": true,
+    "id": "208941af-266d-4d5b-b614-504542e727c0",
+    "timestamp": "2026-05-01T10:12:17.997749"
+  },
+  {
+    "reported_by": "Investor Demo User",
+    "project": "Harbor View Tower - Phase 2",
+    "stakeholder_role": "General contractor (GC)",
+    "organization": "Investor demo",
+    "raw_description": "Worker fell from scaffolding on level 8 approximately 14 feet. John Smith, carpenter. He is conscious but cannot move his legs. Ambulance called immediately. Scaffolding board gave way.",
+    "analysis": {
+      "analysis_schema_version": 3,
+      "incident_type": "Fall",
+      "severity": "CRITICAL",
+      "severity_reason": "Classified as CRITICAL based on keywords detected in report.",
+      "injured_person": "Unknown",
+      "body_part_affected": "Unknown",
+      "location_on_site": "General site",
+      "equipment_involved": "None",
+      "immediate_cause": "Under investigation \u2014 see full incident description.",
+      "osha_recordable": true,
+      "osha_reason": "Likely requires medical treatment beyond first aid.",
+      "osha_forms_required": [
+        "OSHA 300",
+        "OSHA 301"
+      ],
+      "risk_score": 100,
+      "risk_score_reason": "Risk scored mainly from CRITICAL severity plus incident category (Fall) and OSHA recordable.",
+      "evidence_snippets": [
+        "Worker fell from scaffolding on level 8 approximately 14 feet"
+      ],
+      "environmental_hazard_score": 20,
+      "environmental_hazard_reason": "Environmental hazard assessed as low based on incident category and environmental-release indicators.",
+      "sustainability_concerns": [
+        "Dropped/fragmented materials create waste and disposal load",
+        "Cleanup may release debris to soil or storm drains if not contained"
+      ],
+      "sustainability_actions_required": [
+        "Contain fallen/debris materials during cleanup (no loose debris near drains; use lined collection bins)",
+        "Segregate damaged scaffold/ladder components into waste streams (recycle/landfill per site SOP)",
+        "Use dust suppression or controlled clean-up methods if particulates are generated during removal",
+        "Update scaffold/ladder inspection checklist and require documented sign-off before work starts"
+      ],
+      "efficiency_score": 94,
+      "efficiency_score_reason": "Efficiency opportunity driven by high-impact incident impact (Fall) and process-control gaps detected in the report.",
+      "efficiency_actions_required": [
+        "Introduce a standardized scaffold/ladder inspection schedule with documented sign-off per shift",
+        "Implement dropped-object/fall prevention checks (guards, planks, access) as a pre-start gate",
+        "Reduce downtime by ensuring replacement components are staged on-site for rapid corrections",
+        "Run short interval toolbox talks focused on the specific failure mode detected"
+      ],
+      "immediate_actions_required": [
+        "Secure the area and prevent further hazards",
+        "Provide first aid or call 911 if needed",
+        "Notify safety manager immediately",
+        "Preserve evidence for investigation"
+      ],
+      "summary": "Incident report submitted. AI analysis completed using rule-based fallback (no API key configured). Incident classified as Fall with CRITICAL severity. Please review and verify all fields."
+    },
+    "status": "Open",
+    "report_generated": true,
+    "id": "0babd522-6dd5-4b0e-84d9-9ba4554e2eb9",
+    "timestamp": "2026-05-01T10:14:18.772873"
+  },
+  {
+    "reported_by": "Investor Demo User",
+    "project": "Riverside Bridge Rehab",
+    "stakeholder_role": "General contractor (GC)",
+    "organization": "Investor demo",
+    "raw_description": "Close call with the tower crane today. Load swung over workers on the east side who hadn't been cleared from the zone. Nobody was hit but it was very close. Crew wasn't notified of the lift schedule.",
+    "analysis": {
+      "analysis_schema_version": 3,
+      "incident_type": "Near Miss",
+      "severity": "LOW",
+      "severity_reason": "Classified as LOW based on keywords detected in report.",
+      "injured_person": "Unknown",
+      "body_part_affected": "Unknown",
+      "location_on_site": "General site",
+      "equipment_involved": "None",
+      "immediate_cause": "Under investigation \u2014 see full incident description.",
+      "osha_recordable": false,
+      "osha_reason": "First aid only \u2014 not recordable.",
+      "osha_forms_required": [],
+      "risk_score": 15,
+      "risk_score_reason": "Risk scored mainly from LOW severity plus incident category (Near Miss) and not OSHA recordable.",
+      "evidence_snippets": [
+        "Close call with the tower crane today",
+        "Load swung over workers on the east side who hadn't been cleared from the zone"
+      ],
+      "environmental_hazard_score": 15,
+      "environmental_hazard_reason": "Environmental hazard assessed as low based on incident category and environmental-release indicators.",
+      "sustainability_concerns": [
+        "Waste and carbon impacts from repeated incidents can be avoided with stronger controls"
+      ],
+      "sustainability_actions_required": [
+        "Review environmental risks in the task plan (JHA) and set measurable control checks before start",
+        "Ensure cleanup and waste disposal follow site sustainability procedures (waste stream + documentation)",
+        "Update controls to prevent recurrence and unnecessary rework",
+        "Log lessons learned and schedule follow-up verification"
+      ],
+      "efficiency_score": 60,
+      "efficiency_score_reason": "Efficiency opportunity driven by lower-impact incident impact (Near Miss) and process-control gaps detected in the report.",
+      "efficiency_actions_required": [
+        "Fix lift/entry scheduling communication so crews work only inside cleared zones",
+        "Improve communication and pre-task planning to prevent repeat near misses",
+        "Use job hazard analysis (JHA) with measurable control checks before start",
+        "Capture root cause and update SOPs to reduce waste from rework"
+      ],
+      "immediate_actions_required": [
+        "Secure the area and prevent further hazards",
+        "Provide first aid or call 911 if needed",
+        "Notify safety manager immediately",
+        "Preserve evidence for investigation"
+      ],
+      "summary": "Incident report submitted. AI analysis completed using rule-based fallback (no API key configured). Incident classified as Near Miss with LOW severity. Please review and verify all fields."
+    },
+    "status": "Open",
+    "report_generated": true,
+    "id": "91473a9c-2a7c-411f-86d5-3708e656e925",
+    "timestamp": "2026-05-01T10:14:18.792441"
+  },
+  {
+    "reported_by": "Investor Demo User",
+    "project": "Downtown Mixed-Use Development",
+    "stakeholder_role": "General contractor (GC)",
+    "organization": "Investor demo",
+    "raw_description": "Sub-contractor got shocked while connecting to the panel on floor 3. Didn't follow lockout tagout procedure. His hand went numb. We sent him to urgent care right away.",
+    "analysis": {
+      "analysis_schema_version": 3,
+      "incident_type": "Electrical",
+      "severity": "CRITICAL",
+      "severity_reason": "Classified as CRITICAL based on keywords detected in report.",
+      "injured_person": "Unknown",
+      "body_part_affected": "Unknown",
+      "location_on_site": "General site",
+      "equipment_involved": "None",
+      "immediate_cause": "Under investigation \u2014 see full incident description.",
+      "osha_recordable": true,
+      "osha_reason": "Likely requires medical treatment beyond first aid.",
+      "osha_forms_required": [
+        "OSHA 300",
+        "OSHA 301"
+      ],
+      "risk_score": 100,
+      "risk_score_reason": "Risk scored mainly from CRITICAL severity plus incident category (Electrical) and OSHA recordable.",
+      "evidence_snippets": [
+        "Sub-contractor got shocked while connecting to the panel on floor 3",
+        "His hand went numb"
+      ],
+      "environmental_hazard_score": 35,
+      "environmental_hazard_reason": "Environmental hazard assessed as low based on incident category and environmental-release indicators.",
+      "sustainability_concerns": [
+        "Incorrect energizing/repair triggers avoidable component replacement (e-waste + materials waste)"
+      ],
+      "sustainability_actions_required": [
+        "Strengthen LOTO compliance (pre-task checklist + sign-off + verification point at the panel/work location)",
+        "Reduce reactive repairs by adding failure-pattern checks to preventive maintenance schedules",
+        "Stop unnecessary replacements: repair/replace decisions require documented fault verification",
+        "Ensure any removed components are handled as e-waste/material waste per approved vendor stream"
+      ],
+      "efficiency_score": 100,
+      "efficiency_score_reason": "Efficiency opportunity driven by high-impact incident impact (Electrical) and process-control gaps detected in the report.",
+      "efficiency_actions_required": [
+        "Use a LOTO verification checklist at the point of work (checkboxes + supervisor sign-off before energizing)",
+        "Add photo evidence/verification steps for completed lockout/tagout where feasible",
+        "Track repeat issues and trigger targeted re-training within 7 days of the incident",
+        "Ensure spare parts are kitted to reduce downtime from follow-on repairs"
+      ],
+      "immediate_actions_required": [
+        "Secure the area and prevent further hazards",
+        "Provide first aid or call 911 if needed",
+        "Notify safety manager immediately",
+        "Preserve evidence for investigation"
+      ],
+      "summary": "Incident report submitted. AI analysis completed using rule-based fallback (no API key configured). Incident classified as Electrical with CRITICAL severity. Please review and verify all fields."
+    },
+    "status": "Open",
+    "report_generated": true,
+    "id": "8473e67f-1503-4e66-bb1b-65ce04059650",
+    "timestamp": "2026-05-01T10:14:18.811677"
+  },
+  {
+    "reported_by": "Investor Demo User",
+    "project": "Highway 128 Expansion",
+    "stakeholder_role": "General contractor (GC)",
+    "organization": "Investor demo",
+    "raw_description": "Form release agent spilled on worker forearm. Skin is red and irritated. Washed with water for 20 minutes. No blisters. Worker needs to see occupational health.",
+    "analysis": {
+      "analysis_schema_version": 3,
+      "incident_type": "Chemical Exposure",
+      "severity": "LOW",
+      "severity_reason": "Classified as LOW based on keywords detected in report.",
+      "injured_person": "Unknown",
+      "body_part_affected": "Unknown",
+      "location_on_site": "General site",
+      "equipment_involved": "None",
+      "immediate_cause": "Under investigation \u2014 see full incident description.",
+      "osha_recordable": false,
+      "osha_reason": "First aid only \u2014 not recordable.",
+      "osha_forms_required": [],
+      "risk_score": 33,
+      "risk_score_reason": "Risk scored mainly from LOW severity plus incident category (Chemical Exposure) and not OSHA recordable.",
+      "evidence_snippets": [
+        "Form release agent spilled on worker forearm"
+      ],
+      "environmental_hazard_score": 90,
+      "environmental_hazard_reason": "Environmental hazard assessed as high based on incident category and environmental-release indicators.",
+      "sustainability_concerns": [
+        "Potential chemical release to soil/water",
+        "Contaminated PPE/waste handling risk",
+        "Need SDS-driven spill response"
+      ],
+      "sustainability_actions_required": [
+        "Contain and isolate the spill area; use spill kit and follow SDS",
+        "Flush/neutralize per SDS and prevent entry to drains/waterways",
+        "Segregate contaminated waste/PPE for compliant disposal",
+        "Document environmental controls and corrective prevention steps"
+      ],
+      "efficiency_score": 51,
+      "efficiency_score_reason": "Efficiency opportunity driven by lower-impact incident impact (Chemical Exposure) and process-control gaps detected in the report.",
+      "efficiency_actions_required": [
+        "Pre-stage chemical PPE and spill kits to reduce response time",
+        "Implement SDS-based handling SOPs for every task requiring chemicals",
+        "Introduce double-checks for PPE and container labeling before use",
+        "Review chemical handling workflow to reduce spills and rework"
+      ],
+      "immediate_actions_required": [
+        "Secure the area and prevent further hazards",
+        "Provide first aid or call 911 if needed",
+        "Notify safety manager immediately",
+        "Preserve evidence for investigation"
+      ],
+      "summary": "Incident report submitted. AI analysis completed using rule-based fallback (no API key configured). Incident classified as Chemical Exposure with LOW severity. Please review and verify all fields."
+    },
+    "status": "Open",
+    "report_generated": true,
+    "id": "1db0b7ae-a2bb-47f8-8640-c3e0e7813293",
+    "timestamp": "2026-05-01T10:14:18.843917"
+  },
+  {
+    "reported_by": "Investor Demo User",
+    "project": "Harbor View Tower - Phase 2",
+    "stakeholder_role": "General contractor (GC)",
+    "organization": "Investor demo",
+    "raw_description": "Worker fell from scaffolding on level 8 approximately 14 feet. John Smith, carpenter. He is conscious but cannot move his legs. Ambulance called immediately. Scaffolding board gave way.",
+    "analysis": {
+      "analysis_schema_version": 3,
+      "incident_type": "Fall",
+      "severity": "CRITICAL",
+      "severity_reason": "Classified as CRITICAL based on keywords detected in report.",
+      "injured_person": "Unknown",
+      "body_part_affected": "Unknown",
+      "location_on_site": "General site",
+      "equipment_involved": "None",
+      "immediate_cause": "Under investigation \u2014 see full incident description.",
+      "osha_recordable": true,
+      "osha_reason": "Likely requires medical treatment beyond first aid.",
+      "osha_forms_required": [
+        "OSHA 300",
+        "OSHA 301"
+      ],
+      "risk_score": 100,
+      "risk_score_reason": "Risk scored mainly from CRITICAL severity plus incident category (Fall) and OSHA recordable.",
+      "evidence_snippets": [
+        "Worker fell from scaffolding on level 8 approximately 14 feet"
+      ],
+      "environmental_hazard_score": 20,
+      "environmental_hazard_reason": "Environmental hazard assessed as low based on incident category and environmental-release indicators.",
+      "sustainability_concerns": [
+        "Dropped/fragmented materials create waste and disposal load",
+        "Cleanup may release debris to soil or storm drains if not contained"
+      ],
+      "sustainability_actions_required": [
+        "Contain fallen/debris materials during cleanup (no loose debris near drains; use lined collection bins)",
+        "Segregate damaged scaffold/ladder components into waste streams (recycle/landfill per site SOP)",
+        "Use dust suppression or controlled clean-up methods if particulates are generated during removal",
+        "Update scaffold/ladder inspection checklist and require documented sign-off before work starts"
+      ],
+      "efficiency_score": 94,
+      "efficiency_score_reason": "Efficiency opportunity driven by high-impact incident impact (Fall) and process-control gaps detected in the report.",
+      "efficiency_actions_required": [
+        "Introduce a standardized scaffold/ladder inspection schedule with documented sign-off per shift",
+        "Implement dropped-object/fall prevention checks (guards, planks, access) as a pre-start gate",
+        "Reduce downtime by ensuring replacement components are staged on-site for rapid corrections",
+        "Run short interval toolbox talks focused on the specific failure mode detected"
+      ],
+      "immediate_actions_required": [
+        "Secure the area and prevent further hazards",
+        "Provide first aid or call 911 if needed",
+        "Notify safety manager immediately",
+        "Preserve evidence for investigation"
+      ],
+      "summary": "Incident report submitted. AI analysis completed using rule-based fallback (no API key configured). Incident classified as Fall with CRITICAL severity. Please review and verify all fields."
+    },
+    "status": "Open",
+    "report_generated": true,
+    "id": "0ab5a7bf-532e-4238-a9fb-bc956b09be93",
+    "timestamp": "2026-06-24T22:00:28.457968"
+  },
+  {
+    "reported_by": "Investor Demo User",
+    "project": "Riverside Bridge Rehab",
+    "stakeholder_role": "General contractor (GC)",
+    "organization": "Investor demo",
+    "raw_description": "Close call with the tower crane today. Load swung over workers on the east side who hadn't been cleared from the zone. Nobody was hit but it was very close. Crew wasn't notified of the lift schedule.",
+    "analysis": {
+      "analysis_schema_version": 3,
+      "incident_type": "Near Miss",
+      "severity": "LOW",
+      "severity_reason": "Classified as LOW based on keywords detected in report.",
+      "injured_person": "Unknown",
+      "body_part_affected": "Unknown",
+      "location_on_site": "General site",
+      "equipment_involved": "None",
+      "immediate_cause": "Under investigation \u2014 see full incident description.",
+      "osha_recordable": false,
+      "osha_reason": "First aid only \u2014 not recordable.",
+      "osha_forms_required": [],
+      "risk_score": 15,
+      "risk_score_reason": "Risk scored mainly from LOW severity plus incident category (Near Miss) and not OSHA recordable.",
+      "evidence_snippets": [
+        "Close call with the tower crane today",
+        "Load swung over workers on the east side who hadn't been cleared from the zone"
+      ],
+      "environmental_hazard_score": 15,
+      "environmental_hazard_reason": "Environmental hazard assessed as low based on incident category and environmental-release indicators.",
+      "sustainability_concerns": [
+        "Waste and carbon impacts from repeated incidents can be avoided with stronger controls"
+      ],
+      "sustainability_actions_required": [
+        "Review environmental risks in the task plan (JHA) and set measurable control checks before start",
+        "Ensure cleanup and waste disposal follow site sustainability procedures (waste stream + documentation)",
+        "Update controls to prevent recurrence and unnecessary rework",
+        "Log lessons learned and schedule follow-up verification"
+      ],
+      "efficiency_score": 60,
+      "efficiency_score_reason": "Efficiency opportunity driven by lower-impact incident impact (Near Miss) and process-control gaps detected in the report.",
+      "efficiency_actions_required": [
+        "Fix lift/entry scheduling communication so crews work only inside cleared zones",
+        "Improve communication and pre-task planning to prevent repeat near misses",
+        "Use job hazard analysis (JHA) with measurable control checks before start",
+        "Capture root cause and update SOPs to reduce waste from rework"
+      ],
+      "immediate_actions_required": [
+        "Secure the area and prevent further hazards",
+        "Provide first aid or call 911 if needed",
+        "Notify safety manager immediately",
+        "Preserve evidence for investigation"
+      ],
+      "summary": "Incident report submitted. AI analysis completed using rule-based fallback (no API key configured). Incident classified as Near Miss with LOW severity. Please review and verify all fields."
+    },
+    "status": "Open",
+    "report_generated": true,
+    "id": "4c83ac52-0fc2-4851-b17a-74588886d15f",
+    "timestamp": "2026-06-24T22:00:28.600541"
+  },
+  {
+    "reported_by": "Investor Demo User",
+    "project": "Downtown Mixed-Use Development",
+    "stakeholder_role": "General contractor (GC)",
+    "organization": "Investor demo",
+    "raw_description": "Sub-contractor got shocked while connecting to the panel on floor 3. Didn't follow lockout tagout procedure. His hand went numb. We sent him to urgent care right away.",
+    "analysis": {
+      "analysis_schema_version": 3,
+      "incident_type": "Electrical",
+      "severity": "CRITICAL",
+      "severity_reason": "Classified as CRITICAL based on keywords detected in report.",
+      "injured_person": "Unknown",
+      "body_part_affected": "Unknown",
+      "location_on_site": "General site",
+      "equipment_involved": "None",
+      "immediate_cause": "Under investigation \u2014 see full incident description.",
+      "osha_recordable": true,
+      "osha_reason": "Likely requires medical treatment beyond first aid.",
+      "osha_forms_required": [
+        "OSHA 300",
+        "OSHA 301"
+      ],
+      "risk_score": 100,
+      "risk_score_reason": "Risk scored mainly from CRITICAL severity plus incident category (Electrical) and OSHA recordable.",
+      "evidence_snippets": [
+        "Sub-contractor got shocked while connecting to the panel on floor 3",
+        "His hand went numb"
+      ],
+      "environmental_hazard_score": 35,
+      "environmental_hazard_reason": "Environmental hazard assessed as low based on incident category and environmental-release indicators.",
+      "sustainability_concerns": [
+        "Incorrect energizing/repair triggers avoidable component replacement (e-waste + materials waste)"
+      ],
+      "sustainability_actions_required": [
+        "Strengthen LOTO compliance (pre-task checklist + sign-off + verification point at the panel/work location)",
+        "Reduce reactive repairs by adding failure-pattern checks to preventive maintenance schedules",
+        "Stop unnecessary replacements: repair/replace decisions require documented fault verification",
+        "Ensure any removed components are handled as e-waste/material waste per approved vendor stream"
+      ],
+      "efficiency_score": 100,
+      "efficiency_score_reason": "Efficiency opportunity driven by high-impact incident impact (Electrical) and process-control gaps detected in the report.",
+      "efficiency_actions_required": [
+        "Use a LOTO verification checklist at the point of work (checkboxes + supervisor sign-off before energizing)",
+        "Add photo evidence/verification steps for completed lockout/tagout where feasible",
+        "Track repeat issues and trigger targeted re-training within 7 days of the incident",
+        "Ensure spare parts are kitted to reduce downtime from follow-on repairs"
+      ],
+      "immediate_actions_required": [
+        "Secure the area and prevent further hazards",
+        "Provide first aid or call 911 if needed",
+        "Notify safety manager immediately",
+        "Preserve evidence for investigation"
+      ],
+      "summary": "Incident report submitted. AI analysis completed using rule-based fallback (no API key configured). Incident classified as Electrical with CRITICAL severity. Please review and verify all fields."
+    },
+    "status": "Open",
+    "report_generated": true,
+    "id": "45db3ac5-4234-45c0-8bc8-7389f6e16199",
+    "timestamp": "2026-06-24T22:00:28.699416"
   }
 ]
